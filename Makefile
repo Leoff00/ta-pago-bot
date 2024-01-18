@@ -1,7 +1,7 @@
 TARGET_DIR=bin
 GOBUILD=go build
 MAIN_DIR=cmd
-BINARY_NAME=go_marvel_htmx
+BINARY_NAME=go_ta_pago_bot
 
 install:
 	go get ./...
