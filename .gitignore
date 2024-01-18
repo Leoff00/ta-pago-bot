@@ -26,5 +26,6 @@ go.work
 
 # Custom files
 .env
+.env.local
 
 # End of https://www.toptal.com/developers/gitignore/api/go
