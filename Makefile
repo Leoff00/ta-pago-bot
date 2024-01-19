@@ -2,6 +2,7 @@ TARGET_DIR=bin
 GOBUILD=go build
 MAIN_DIR=cmd
 BINARY_NAME=go_ta_pago_bot
+MIGRATIONS_DIR=database/migrations
 
 install:
 	go get ./...
@@ -15,6 +16,12 @@ db_up:
 db_down:
 	docker compose down db 
 
+migrate_create:
+	migrate create -ext sql -dir $(MIGRATIONS_DIR) -seq $(migration_name)
+
+migrate_up:
+	docker compose up db_migrate
+
 build:
 	$(GOBUILD) -o $(TARGET_DIR)/$(BINARY_NAME) 
 
@@ -24,7 +31,6 @@ run: db_up
 clean:
 	go clean
 	rm -f $(TARGET_DIR)/$(BINARY_NAME)
-
 
 release: build run
 

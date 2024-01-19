@@ -2,6 +2,8 @@ version: '3.9'
 services:
   db:
     image: postgres:alpine
+    networks:
+      - app
     restart: always
     ports:
       - "${DB_PORT}:5432"
@@ -14,6 +16,38 @@ services:
       - .env
     volumes:
       - "db_data:/var/lib/postgresql/data/pgdata"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  db_migrate:
+    image: migrate/migrate
+    stdin_open: true
+    tty: true
+    networks:
+      - app
+    volumes:
+      - ./database/migrations:/migrations
+    command:
+      [
+        "-path",
+        "/migrations",
+        "-database",
+        "postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=disable",
+        "up"
+      ]
+    links:
+      - db
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   db_data:
+
+
+networks:
+  app:
+    driver: bridge
