@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/leoff00/ta-pago-bot/database"
 	"github.com/leoff00/ta-pago-bot/internal/bot"
+	"github.com/leoff00/ta-pago-bot/internal/db"
 )
 
 const displayArt = "\033[36m" + ` 
@@ -24,7 +24,7 @@ $$$$$$$$\  $$$$$$\        $$$$$$$\   $$$$$$\   $$$$$$\   $$$$$$\  $$\
 func main() {
 	fmt.Println(displayArt)
 
-	db, err := database.Setup()
+	db, err := db.Setup()
 	if err != nil {
 		log.Fatal(err.Error())
 	}
