@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"os"
@@ -13,7 +14,7 @@ import (
 
 var botId string
 
-func Start() {
+func Start(db *sql.DB) {
 	token := env.Getenv("TOKEN")
 	bot, err := discordgo.New(fmt.Sprintf("Bot %s", token))
 
