@@ -25,6 +25,7 @@ func fmtTable() string {
 	// fmt.Println(style)
 	// return style
 
+	//! Need to format the ranking correctly
 	return fmt.Sprintf(`
 	%s
 	| Month    | Savings |
