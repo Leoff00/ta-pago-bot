@@ -10,6 +10,9 @@ install:
 local: db_up
 	go run $(MAIN_DIR)/main.go
 
+local_no_db:
+	go run $(MAIN_DIR)/main.go
+
 db_up:
 	docker compose up db -d
 

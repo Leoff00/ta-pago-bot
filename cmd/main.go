@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/leoff00/ta-pago-bot/database"
-	"github.com/leoff00/ta-pago-bot/pkg/bot"
+	"github.com/leoff00/ta-pago-bot/internal/bot"
 )
 
 const displayArt = "\033[36m" + ` 
