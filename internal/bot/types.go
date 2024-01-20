@@ -6,7 +6,4 @@ import "github.com/bwmarrin/discordgo"
 type InteractionCreateResponse = func(*discordgo.Session, *discordgo.InteractionCreate)
 
 // Alias to reduce typing cast
-type MsgEmbedType []*discordgo.MessageEmbed
-
-// Alias to reduce typing cast
 var AppCmd = discordgo.InteractionApplicationCommand

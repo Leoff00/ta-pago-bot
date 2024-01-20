@@ -2,12 +2,14 @@ module github.com/leoff00/ta-pago-bot
 
 go 1.21.5
 
-require github.com/spf13/viper v1.18.2
+require (
+	github.com/mattn/go-sqlite3 v1.14.19
+	github.com/spf13/viper v1.18.2
+)
 
 require (
 	github.com/gorilla/websocket v1.4.2 // indirect
-	github.com/lib/pq v1.10.9 // indirect
-	golang.org/x/crypto v0.16.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 )
 
 require (

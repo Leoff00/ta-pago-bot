@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/leoff00/ta-pago-bot/internal/bot"
 	"github.com/leoff00/ta-pago-bot/internal/db"
@@ -23,11 +22,7 @@ $$$$$$$$\  $$$$$$\        $$$$$$$\   $$$$$$\   $$$$$$\   $$$$$$\  $$\
 
 func main() {
 	fmt.Println(displayArt)
+	db.Setup()
 
-	db, err := db.Setup()
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	bot.Start(db)
+	bot.Start()
 }

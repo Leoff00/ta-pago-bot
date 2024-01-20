@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"os"
@@ -14,7 +13,7 @@ import (
 
 var botId string
 
-func Start(db *sql.DB) {
+func Start() {
 	token := env.Getenv("TOKEN")
 	bot, err := discordgo.New(fmt.Sprintf("Bot %s", token))
 
@@ -34,7 +33,7 @@ func Start(db *sql.DB) {
 
 	botId = user.ID
 
-	ExecHandlers(bot, botId)
+	ExecHandlers(bot)
 
 	bot.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
 	bot.Identify.Intents = discordgo.PermissionManageMessages
@@ -54,6 +53,5 @@ func Start(db *sql.DB) {
 
 	stsignal := make(chan os.Signal, 1)
 	signal.Notify(stsignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
-
 	<-stsignal
 }

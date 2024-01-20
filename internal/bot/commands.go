@@ -9,15 +9,17 @@ import (
 var (
 	cmds = []*discordgo.ApplicationCommand{
 		{
+			Name:        "help",
+			Description: "Figure out what command do! can use this one a lot!",
+		},
+		{
 			Name:        "inscrever",
 			Description: "Join in the TA PAGO! meeting and count!",
 		},
-
 		{
 			Name:        "ta-pago",
 			Description: "Submit your workout to the bot count!",
 		},
-
 		{
 			Name:        "ranking",
 			Description: "See the best workout doers.",

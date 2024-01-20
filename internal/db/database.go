@@ -2,27 +2,28 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
+	"time"
 
 	"github.com/leoff00/ta-pago-bot/pkg/env"
-	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
 )
 
-const dbDriver = "postgres"
+func Setup() {
+	database, err := sql.Open("sqlite3", "ta_pago.db")
 
-func Setup() (*sql.DB, error) {
-	connStr := fmt.Sprintf(
-		"%s://%s:%s@%s/%s?sslmode=disable", dbDriver,
-		env.Getenv("DB_USER"),
-		env.Getenv("DB_PASSWORD"),
-		env.Getenv("DB_HOST"),
-		env.Getenv("DB_NAME"),
-	)
-	db, err := sql.Open(dbDriver, connStr)
-	log.Printf("Database '%v' connection established", env.Getenv("DB_NAME"))
 	if err != nil {
-		return nil, err
+		log.Default().Fatalln("Cannot open the DB. On Setup Func ->", err.Error())
 	}
-	return db, nil
+
+	if err = database.Ping(); err != nil {
+		log.Default().Fatalln("Cannot ping the DB, maybe is offline. On Setup Func ->", err.Error())
+	}
+
+	database.SetMaxIdleConns(10)
+	database.SetMaxOpenConns(100)
+	database.SetConnMaxLifetime(time.Hour)
+
+	log.Default().Printf("Connect estabilished with DB: %s On Setup DB", env.Getenv("DB_NAME"))
+
 }
