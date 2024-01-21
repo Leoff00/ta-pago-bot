@@ -11,7 +11,9 @@ import (
 	"github.com/leoff00/ta-pago-bot/pkg/env"
 )
 
-var botId string
+var (
+	botId string
+)
 
 func Start() {
 	token := env.Getenv("TOKEN")

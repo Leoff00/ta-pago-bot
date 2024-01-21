@@ -8,54 +8,56 @@ import (
 	"github.com/leoff00/ta-pago-bot/internal/models"
 )
 
-// func GetUsers() []models.DiscordUser {
-// 	db, err := sql.Open("sqlite3", "ta_pago.db")
+type DiscordUserRepository struct{}
 
-// 	if err != nil {
-// 		log.Default().Println("Cannot open the DB on Repo ->", err.Error())
-// 	}
-
-// 	var arr []models.DiscordUser
-
-// 	rows, err := Db.Query(`SELECT id, username, count FROM DISCORD_USERS`)
-
-// 	if err != nil {
-// 		log.Default().Println("Cannot get users from DB on Repo.", err.Error())
-// 	}
-
-// 	defer rows.Close()
-
-// 	for rows.Next() {
-// 		var id string
-// 		var username string
-// 		var count int
-
-// 		if err := rows.Scan(&id, &username, &count); err != nil {
-// 			log.Default().Println("Cannot attach db returned values into var on Repo.", err.Error())
-// 		}
-
-// 		du := models.DiscordUser{
-// 			Id:       id,
-// 			Username: username,
-// 			Count:    count,
-// 		}
-// 		arr = append(arr, du)
-// 	}
-// 	defer db.Close()
-
-// 	return arr
-// }
-
-func Save(du models.DiscordUser) error {
+func (dur *DiscordUserRepository) GetUsers() []models.DiscordUser {
 	db, err := sql.Open("sqlite3", "ta_pago.db")
-
 	if err != nil {
 		log.Default().Println("Cannot open the DB on Repo ->", err.Error())
+		return nil
 	}
 
-	usr := getUserById(du.Id)
+	var arr []models.DiscordUser
 
-	if usr != nil {
+	rows, err := db.Query(`SELECT id, username, count FROM DISCORD_USERS ORDER BY count DESC LIMIT 10`)
+
+	if err != nil {
+		log.Default().Println("Cannot get users from DB on Repo.", err.Error())
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var id string
+		var username string
+		var count int
+
+		if err := rows.Scan(&id, &username, &count); err != nil {
+			log.Default().Println("Cannot attach db returned values into var on Repo.", err.Error())
+		}
+
+		du := models.DiscordUser{
+			Id:       "id",
+			Username: username,
+			Count:    count,
+		}
+		arr = append(arr, du)
+	}
+
+	return arr
+}
+
+func (dur *DiscordUserRepository) Save(du models.DiscordUser) error {
+
+	db, err := sql.Open("sqlite3", "ta_pago.db")
+	if err != nil {
+		log.Default().Println("Cannot open the DB on Repo ->", err.Error())
+		return err
+	}
+
+	usr := dur.getUserById(du.Id)
+
+	if usr.Id != "" {
 		return errors.New("você já está inscrito na lista fera")
 	}
 
@@ -63,23 +65,22 @@ func Save(du models.DiscordUser) error {
 
 	if err != nil {
 		log.Default().Println("Cannot insert data into DB on Repo.", err.Error())
-		return nil
+		return err
 	}
 
 	affected, err := rows.RowsAffected()
 
 	if err != nil {
 		log.Default().Println("Cannot get the affected row line numbers on Repo.", err.Error())
-		return nil
+		return err
 	}
 
 	log.Default().Println("Rows affected on Save User ->", affected)
-
-	return nil
+	return err
 
 }
 
-func getUserById(discordId string) *models.DiscordUser {
+func (dur *DiscordUserRepository) getUserById(discordId string) *models.DiscordUser {
 	db, err := sql.Open("sqlite3", "ta_pago.db")
 	if err != nil {
 		log.Default().Println("Cannot open the DB on Repo ->", err.Error())
@@ -89,27 +90,24 @@ func getUserById(discordId string) *models.DiscordUser {
 	var du models.DiscordUser
 	row := db.QueryRow(`SELECT id, username, count FROM DISCORD_USERS WHERE id = ?`, discordId)
 
-	if err = row.Scan(&du.Id, &du.Username, &du.Count); err != nil {
-		log.Default().Println("Error fetching user from DB on Repo.", err.Error())
-		return nil
-	}
+	row.Scan(&du.Id, &du.Username, &du.Count)
 
+	defer db.Close()
 	return &du
 }
 
-// * Need to understand why updatecount is with
-// * call side effect in /ta-pago cmd handler.
-func UpdateCount(discordId string) error {
-	db, err := sql.Open("sqlite3", "ta_pago.db")
+func (dur *DiscordUserRepository) UpdateCount(discordId string) error {
 
+	db, err := sql.Open("sqlite3", "ta_pago.db")
 	if err != nil {
 		log.Default().Println("Cannot open the DB on Repo ->", err.Error())
+		return err
 	}
 
-	usr := getUserById(discordId)
+	usr := dur.getUserById(discordId)
 
-	if err != nil || usr == nil {
-		return errors.New("você já está inscrito na lista fera")
+	if usr.Id == "" {
+		return errors.New("você precisa antes se inscrever na lista fera")
 	}
 
 	rows, err := db.Exec(`UPDATE DISCORD_USERS SET count = count + 1 WHERE id = ?`, discordId)
@@ -122,12 +120,12 @@ func UpdateCount(discordId string) error {
 
 	if err != nil {
 		log.Default().Println("Cannot get the affected row line numbers on Repo.", err.Error())
-		return nil
+		return err
 	}
 
-	log.Default().Println("Rows affected on Update Count ->", affected)
-
 	defer db.Close()
-	return nil
+
+	log.Default().Println("Rows affected on Update Count ->", affected)
+	return err
 
 }

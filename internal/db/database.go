@@ -10,20 +10,21 @@ import (
 )
 
 func Setup() {
-	database, err := sql.Open("sqlite3", "ta_pago.db")
+	db, err := sql.Open("sqlite3", "ta_pago.db")
 
 	if err != nil {
 		log.Default().Fatalln("Cannot open the DB. On Setup Func ->", err.Error())
 	}
 
-	if err = database.Ping(); err != nil {
+	if err = db.Ping(); err != nil {
 		log.Default().Fatalln("Cannot ping the DB, maybe is offline. On Setup Func ->", err.Error())
 	}
 
-	database.SetMaxIdleConns(10)
-	database.SetMaxOpenConns(100)
-	database.SetConnMaxLifetime(time.Hour)
+	db.SetMaxIdleConns(10)
+	db.SetMaxOpenConns(100)
+	db.SetConnMaxLifetime(time.Hour)
 
 	log.Default().Printf("Connect estabilished with DB: %s On Setup DB", env.Getenv("DB_NAME"))
 
+	defer db.Close()
 }

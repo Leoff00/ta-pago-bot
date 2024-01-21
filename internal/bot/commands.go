@@ -38,6 +38,7 @@ func addCmds(commands []*discordgo.ApplicationCommand, s *discordgo.Session) err
 
 func OnReady() func(*discordgo.Session, *discordgo.Ready) {
 	return func(s *discordgo.Session, _ *discordgo.Ready) {
+		DeleteCommands(s.State.Application.ID)
 		if err := addCmds(cmds, s); err != nil {
 			log.Default().Println("Cannot add commands - on AddCmd Func ->", err.Error())
 		}
@@ -49,7 +50,7 @@ func DeleteCommands(botId string) func(*discordgo.Session, *discordgo.Ready) {
 
 		commands, err := s.ApplicationCommands(botId, "")
 		if err != nil {
-			log.Default().Println("Wasn't command to load on Command file ->", err.Error())
+			log.Default().Println("Wasn't possible to load... on Command file ->", err.Error())
 			return
 		}
 		for _, command := range commands {
