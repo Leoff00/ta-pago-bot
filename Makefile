@@ -29,4 +29,4 @@ clean:
 
 release: build run
 
-.PHONY: local build run release install db_up db_down
+.PHONY: local build run release install migration_create migration_exec
