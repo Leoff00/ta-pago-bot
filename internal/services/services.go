@@ -71,6 +71,7 @@ func (as *ActivitiesServices) ExecuteRankingService(i *discordgo.InteractionCrea
 	rank := dur.GetUsers()
 	var res string
 	emojis := [3]string{"🥇🏆", "🥈🏆", "🥉🏆"}
+
 	for i, v := range rank[:3] {
 		res += fmt.Sprintf("\nTOP %d %s - %d %s", i+1, v.Username, v.Count, emojis[i])
 	}
@@ -81,7 +82,7 @@ func (as *ActivitiesServices) ExecuteRankingService(i *discordgo.InteractionCrea
 	return &discordgo.InteractionResponseData{
 		Embeds: MsgEmbedType{
 			&discordgo.MessageEmbed{
-				Title:       "Ranking dos mais saúdaveis e marombeiros. 💪🏅",
+				Title:       "Ranking dos mais saudáveis e marombeiros. 💪🏅",
 				Description: res,
 				Type:        discordgo.EmbedTypeArticle,
 				Color:       10,
