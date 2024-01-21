@@ -69,38 +69,20 @@ func (as *ActivitiesServices) ExecutePayService(i *discordgo.InteractionCreate) 
 
 func (as *ActivitiesServices) ExecuteRankingService(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
 	rank := dur.GetUsers()
-	fmt.Println(rank)
-	var top1, top2, top3, top4, top5, top6, top7, top8, top9, top10 string
-	var c1, c2, c3, c4, c5, c6, c7, c8, c9, c10 int
-	top1, c1 = rank[0].Username, rank[0].Count
-	top2, c2 = rank[1].Username, rank[1].Count
-	top3, c3 = rank[2].Username, rank[2].Count
-	top4, c4 = rank[3].Username, rank[3].Count
-	top5, c5 = rank[4].Username, rank[4].Count
-	top6, c6 = rank[5].Username, rank[5].Count
-	top7, c7 = rank[6].Username, rank[6].Count
-	top8, c8 = rank[7].Username, rank[7].Count
-	top9, c9 = rank[8].Username, rank[8].Count
-	top10, c10 = rank[9].Username, rank[9].Count
+	var res string
+	emojis := [3]string{"🥇🏆", "🥈🏆", "🥉🏆"}
+	for i, v := range rank[:3] {
+		res += fmt.Sprintf("\nTOP %d %s - %d %s", i+1, v.Username, v.Count, emojis[i])
+	}
+	for i, v := range rank[3:10] {
+		res += fmt.Sprintf("\nTOP %d %s - %d", i+4, v.Username, v.Count)
+	}
 
-	fmtDescription := fmt.Sprintf(`
-	## LISTA DOS 10 PRIMEIROS MAIS EXERCITADOS DO SERVER: 
-	TOP 1 %-15s -  	 %d 🥇🏆
-	TOP 2 %-15s -    %d 🥈🏆
-	TOP 3 %-15s -    %d 🥉🏆
-	TOP 4 %-15s -  	 %d
-	TOP 5 %-15s -  	 %d
-	TOP 6 %-15s -  	 %d
-	TOP 7 %-15s -  	 %d
-	TOP 8 %-15s -    %d
-	TOP 9 %-15s -    %d
-	TOP 10 %-15s -    %d`,
-		top1, c1, top2, c2, top3, c3, top4, c4, top5, c5, top6, c6, top7, c7, top8, c8, top9, c9, top10, c10)
 	return &discordgo.InteractionResponseData{
 		Embeds: MsgEmbedType{
 			&discordgo.MessageEmbed{
 				Title:       "Ranking dos mais saúdaveis e marombeiros. 💪🏅",
-				Description: fmtDescription,
+				Description: res,
 				Type:        discordgo.EmbedTypeArticle,
 				Color:       10,
 			}},
