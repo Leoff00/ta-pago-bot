@@ -1,0 +1,4 @@
+.gitignore
+.git
+.github
+.env.example

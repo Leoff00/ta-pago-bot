@@ -1,12 +1,12 @@
 TARGET_DIR=bin
 GOBUILD=go build
-MAIN_DIR=cmd
+MAIN_DIR=./cmd
 BINARY_NAME=go_ta_pago_bot
 MIGRATIONS_DIR=internal/db/migrations
 MIGRATION_NAME=init_mg
 
 install:
-	go get ./...
+	go get ./... && go install ./...
 
 local: migration_exec
 	go run $(MAIN_DIR)/main.go
@@ -18,7 +18,7 @@ migration_exec:
 	migrate -path $(MIGRATIONS_DIR) -database "sqlite3://./ta_pago.db" up
 
 build:
-	$(GOBUILD) -o $(TARGET_DIR)/$(BINARY_NAME) 
+	$(GOBUILD) -o $(TARGET_DIR)/$(BINARY_NAME) $(MAIN_DIR)
 
 run:
 	./$(TARGET_DIR)/$(BINARY_NAME)

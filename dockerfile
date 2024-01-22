@@ -1,26 +1,25 @@
 # BUILD STAGE
-FROM golang:1.21.5-alpine3.19 as build_stage
+FROM golang:1.21.5-alpine3.19 as build
 
-WORKDIR /app/ta_pago_bot
+WORKDIR /app
 
-COPY . .
+COPY ./ta_pago.db ./app
+COPY . /app
 
-RUN go mod download
+RUN apk add --no-cache gcc libc-dev
+RUN CGO_ENABLED=1 go build -o bin/ta_pago_bot cmd/main.go
 
-EXPOSE 4000
-
-RUN go build -o /bin cmd/main.go
-
-# DEPLOY STAGE
-
-FROM alpine:3.19.0
+# RELEASE STAGE
+FROM scratch
 
 WORKDIR /
 
-COPY --from=build_stage /bin /bin
+COPY --from=build /lib/ld-musl-x86_64.so.1 /lib/
+COPY --from=build /lib/libc.musl-x86_64.so.1 /lib/
+COPY --from=build /app/bin/ta_pago_bot /
+COPY --from=build /app/ta_pago.db /ta_pago.db
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 EXPOSE 4000
 
-USER nonroot:nonroot
-
-ENTRYPOINT [ "/bin" ]
+ENTRYPOINT ["./ta_pago_bot"]

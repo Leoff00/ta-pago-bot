@@ -1,0 +1,19 @@
+version: "3.9"
+services:
+  app:
+    image: leoff00/tapagobot:latest
+    container_name: tapago
+    build: 
+      dockerfile: dockerfile
+      context: .
+    restart: on-failure
+    environment:
+      TOKEN: ${TOKEN}
+    networks:
+      - tapago_network
+    ports:
+      - 4000:4000
+
+networks:
+  tapago_network:
+    driver: bridge
