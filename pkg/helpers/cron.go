@@ -20,7 +20,6 @@ type CronTasks struct {
 
 func (ct *CronTasks) ScheduleWipeCountMessage(s *discordgo.Session) {
 	c := ct.Cron
-	// 0 0 0 1 * *
 
 	if _, err := c.AddFunc("@monthly", func() {
 
