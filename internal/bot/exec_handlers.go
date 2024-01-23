@@ -51,7 +51,7 @@ func (ih *InteractionsHandlers) Help() InteractionCreateResponse {
 		if i.Type == AppCmd {
 			switch i.ApplicationCommandData().Name {
 			case "help":
-				helpResponse := activities.HelpCmd(i)
+				helpResponse := activities.HelpCmd()
 				helpers.InteractionResponseFactory(helpResponse, s, i)
 			}
 		}

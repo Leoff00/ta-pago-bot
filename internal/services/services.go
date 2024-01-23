@@ -76,6 +76,18 @@ func (as *ActivitiesServices) ExecuteRankingService() (*discordgo.InteractionRes
 	emojis := [3]string{"🥇🏆", "🥈🏆", "🥉🏆"}
 	rank := dur.GetUsers()
 
+	if len(rank) == 0 {
+		embed = &discordgo.MessageEmbed{
+			Title:       "O ranking ainda está vazio... 💭",
+			Description: "Os frangos ainda não submeteram treinos para o contador...",
+			Type:        discordgo.EmbedTypeArticle,
+			Color:       10,
+		}
+		irdata = &discordgo.InteractionResponseData{
+			Embeds: MsgEmbedType{embed},
+		}
+	}
+
 	if len(rank) > 0 && len(rank) < 3 {
 		embed = &discordgo.MessageEmbed{
 			Title:       "Opa! Perai...",
@@ -128,7 +140,7 @@ func (as *ActivitiesServices) ExecuteRankingService() (*discordgo.InteractionRes
 	return irdata, embed
 }
 
-func (as *ActivitiesServices) HelpCmd(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
+func (as *ActivitiesServices) HelpCmd() *discordgo.InteractionResponseData {
 	fmtDescription := fmt.Sprintln(`
 		/inscrever: Este comando te incluirá na lista de contagem de treinos o autor do comando. ✅ 
 

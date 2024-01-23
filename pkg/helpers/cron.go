@@ -44,10 +44,8 @@ func (ct *CronTasks) ScheduleWipeCountMessage(s *discordgo.Session) {
 
 func (ct *CronTasks) ScheduleRankingMessage(s *discordgo.Session) {
 	c := ct.Cron
-
 	if _, err := c.AddFunc("0 12 * * FRI", func() {
 		as := services.ActivitiesServices{}
-
 		_, embed := as.ExecuteRankingService()
 		if _, err := s.ChannelMessageSendEmbed(env.Getenv("CHANNEL_ID"), embed); err != nil {
 			log.Default().Println("Cannot send the message on Helper", err.Error())
