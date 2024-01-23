@@ -9,6 +9,7 @@ services:
     restart: on-failure
     environment:
       TOKEN: ${TOKEN}
+      CHANNEL_ID: ${CHANNEL_ID}
     networks:
       - tapago_network
     ports:
