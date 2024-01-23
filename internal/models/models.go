@@ -5,3 +5,8 @@ type DiscordUser struct {
 	Username string `json:"username"`
 	Count    int    `json:"count"`
 }
+
+type DiscordReturnType struct {
+	Username string `json:"username"`
+	Count    int    `json:"count"`
+}

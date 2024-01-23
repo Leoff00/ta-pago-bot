@@ -9,10 +9,13 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leoff00/ta-pago-bot/pkg/env"
+	"github.com/leoff00/ta-pago-bot/pkg/helpers"
+	"github.com/robfig/cron/v3"
 )
 
 var (
 	botId string
+	c     = helpers.CronTasks{Cron: cron.New()}
 )
 
 func Start() {
@@ -36,6 +39,8 @@ func Start() {
 	botId = user.ID
 
 	ExecHandlers(bot)
+	c.ExecuteTasks(bot)
+	c.Cron.Start()
 
 	bot.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
 	bot.Identify.Intents = discordgo.PermissionManageMessages
@@ -56,4 +61,6 @@ func Start() {
 	stsignal := make(chan os.Signal, 1)
 	signal.Notify(stsignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-stsignal
+
+	c.Cron.Stop()
 }

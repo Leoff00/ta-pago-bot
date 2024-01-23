@@ -10,16 +10,16 @@ import (
 
 type DiscordUserRepository struct{}
 
-func (dur *DiscordUserRepository) GetUsers() []models.DiscordUser {
+func (dur *DiscordUserRepository) GetUsers() []models.DiscordReturnType {
 	db, err := sql.Open("sqlite3", "ta_pago.db")
 	if err != nil {
 		log.Default().Println("Cannot open the DB on Repo ->", err.Error())
 		return nil
 	}
 
-	var arr []models.DiscordUser
+	var arr []models.DiscordReturnType
 
-	rows, err := db.Query(`SELECT id, username, count FROM DISCORD_USERS ORDER BY count DESC LIMIT 10`)
+	rows, err := db.Query(`SELECT username, count FROM DISCORD_USERS ORDER BY count DESC LIMIT 10`)
 
 	if err != nil {
 		log.Default().Println("Cannot get users from DB on Repo.", err.Error())
@@ -28,22 +28,19 @@ func (dur *DiscordUserRepository) GetUsers() []models.DiscordUser {
 	defer rows.Close()
 
 	for rows.Next() {
-		var id string
 		var username string
 		var count int
 
-		if err := rows.Scan(&id, &username, &count); err != nil {
+		if err := rows.Scan(&username, &count); err != nil {
 			log.Default().Println("Cannot attach db returned values into var on Repo.", err.Error())
 		}
 
-		du := models.DiscordUser{
-			Id:       "id",
+		drt := models.DiscordReturnType{
 			Username: username,
 			Count:    count,
 		}
-		arr = append(arr, du)
+		arr = append(arr, drt)
 	}
-
 	return arr
 }
 
@@ -96,7 +93,7 @@ func (dur *DiscordUserRepository) getUserById(discordId string) *models.DiscordU
 	return &du
 }
 
-func (dur *DiscordUserRepository) UpdateCount(discordId string) error {
+func (dur *DiscordUserRepository) IncrementCount(discordId string) error {
 
 	db, err := sql.Open("sqlite3", "ta_pago.db")
 	if err != nil {
@@ -128,4 +125,31 @@ func (dur *DiscordUserRepository) UpdateCount(discordId string) error {
 	log.Default().Println("Rows affected on Update Count ->", affected)
 	return err
 
+}
+
+func (dur *DiscordUserRepository) RestartCount() error {
+	db, err := sql.Open("sqlite3", "ta_pago.db")
+	if err != nil {
+		log.Default().Println("Cannot open the DB on Repo ->", err.Error())
+		return err
+	}
+
+	rows, err := db.Exec(`UPDATE DISCORD_USERS SET count = 0`)
+
+	if err != nil {
+		log.Default().Println("Cannot restart the count from DB on Repo.", err.Error())
+		return err
+	}
+
+	affected, err := rows.RowsAffected()
+
+	if err != nil {
+		log.Default().Println("Cannot get the affected row line numbers on Repo.", err.Error())
+		return err
+	}
+
+	defer db.Close()
+
+	log.Default().Println("Rows affected on Update Count ->", affected)
+	return err
 }

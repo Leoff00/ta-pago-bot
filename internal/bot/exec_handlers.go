@@ -39,7 +39,7 @@ func (ih *InteractionsHandlers) Ranking() InteractionCreateResponse {
 		if i.Type == AppCmd {
 			switch i.ApplicationCommandData().Name {
 			case "ranking":
-				rankingResponse := activities.ExecuteRankingService(i)
+				rankingResponse, _ := activities.ExecuteRankingService()
 				helpers.InteractionResponseFactory(rankingResponse, s, i)
 			}
 		}

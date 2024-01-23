@@ -1,4 +1,4 @@
-package helpers
+package factory
 
 import (
 	"github.com/bwmarrin/discordgo"

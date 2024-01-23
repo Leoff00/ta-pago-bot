@@ -5,7 +5,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leoff00/ta-pago-bot/internal/repo"
-	"github.com/leoff00/ta-pago-bot/pkg/helpers"
+	"github.com/leoff00/ta-pago-bot/pkg/factory"
 )
 
 var (
@@ -13,7 +13,7 @@ var (
 )
 
 func (as *ActivitiesServices) ExecuteJoinService(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
-	du := helpers.GetUserData(i)
+	du := factory.GetUserData(i)
 	if err := dur.Save(du); err != nil {
 		return &discordgo.InteractionResponseData{
 			Embeds: MsgEmbedType{
@@ -40,8 +40,8 @@ func (as *ActivitiesServices) ExecuteJoinService(i *discordgo.InteractionCreate)
 }
 
 func (as *ActivitiesServices) ExecutePayService(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
-	du := helpers.GetUserData(i)
-	if err := dur.UpdateCount(du.Id); err != nil {
+	du := factory.GetUserData(i)
+	if err := dur.IncrementCount(du.Id); err != nil {
 		return &discordgo.InteractionResponseData{
 			Embeds: MsgEmbedType{
 				&discordgo.MessageEmbed{
@@ -67,27 +67,65 @@ func (as *ActivitiesServices) ExecutePayService(i *discordgo.InteractionCreate) 
 	}
 }
 
-func (as *ActivitiesServices) ExecuteRankingService(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
-	rank := dur.GetUsers()
-	var res string
+func (as *ActivitiesServices) ExecuteRankingService() (*discordgo.InteractionResponseData, *discordgo.MessageEmbed) {
+	var irdata *discordgo.InteractionResponseData
+	var embed *discordgo.MessageEmbed
+	var emojiIter string
+	var restIter string
+
 	emojis := [3]string{"🥇🏆", "🥈🏆", "🥉🏆"}
+	rank := dur.GetUsers()
 
-	for i, v := range rank[:3] {
-		res += fmt.Sprintf("\nTOP %d %s - %d %s", i+1, v.Username, v.Count, emojis[i])
-	}
-	for i, v := range rank[3:10] {
-		res += fmt.Sprintf("\nTOP %d %s - %d", i+4, v.Username, v.Count)
+	if len(rank) > 0 && len(rank) < 3 {
+		embed = &discordgo.MessageEmbed{
+			Title:       "Opa! Perai...",
+			Description: "É necessário pelo menos ter 3 pessoas pra montar um ranking...",
+			Type:        discordgo.EmbedTypeArticle,
+			Color:       10,
+		}
+		irdata = &discordgo.InteractionResponseData{
+			Embeds: MsgEmbedType{embed},
+		}
 	}
 
-	return &discordgo.InteractionResponseData{
-		Embeds: MsgEmbedType{
-			&discordgo.MessageEmbed{
-				Title:       "Ranking dos mais saudáveis e marombeiros. 💪🏅",
-				Description: res,
-				Type:        discordgo.EmbedTypeArticle,
-				Color:       10,
-			}},
+	if len(rank) == 3 {
+		for i, v := range rank[:3] {
+			emojiIter += fmt.Sprintf("\nTOP %d %s - %d %s", i+1, v.Username, v.Count, emojis[i])
+		}
+		embed = &discordgo.MessageEmbed{
+			Title:       "Ranking dos mais saudáveis e marombeiros. 💪🏅",
+			Description: emojiIter,
+			Type:        discordgo.EmbedTypeArticle,
+			Color:       10,
+		}
+
+		irdata = &discordgo.InteractionResponseData{
+			Embeds: MsgEmbedType{embed},
+		}
 	}
+
+	if len(rank) > 3 {
+		for i, v := range rank[:3] {
+			emojiIter += fmt.Sprintf("\nTOP %d %s - %d %s", i+1, v.Username, v.Count, emojis[i])
+		}
+
+		for i, v := range rank {
+			restIter += fmt.Sprintf("\nTOP %d %s - %d", i+4, v.Username, v.Count)
+		}
+
+		finalStr := emojiIter + restIter
+		embed = &discordgo.MessageEmbed{
+			Title:       "Ranking dos mais saudáveis e marombeiros. 💪🏅",
+			Description: finalStr,
+			Type:        discordgo.EmbedTypeArticle,
+			Color:       10,
+		}
+
+		irdata = &discordgo.InteractionResponseData{
+			Embeds: MsgEmbedType{embed},
+		}
+	}
+	return irdata, embed
 }
 
 func (as *ActivitiesServices) HelpCmd(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
