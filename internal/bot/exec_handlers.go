@@ -3,7 +3,7 @@ package bot
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leoff00/ta-pago-bot/internal/services"
-	"github.com/leoff00/ta-pago-bot/pkg/helpers"
+	"github.com/leoff00/ta-pago-bot/pkg/factory"
 )
 
 var (
@@ -16,7 +16,7 @@ func (ih *InteractionsHandlers) Join() InteractionCreateResponse {
 			switch i.ApplicationCommandData().Name {
 			case "inscrever":
 				joinResponse := activities.ExecuteJoinService(i)
-				helpers.InteractionResponseFactory(joinResponse, s, i)
+				factory.InteractionResponseFactory(joinResponse, s, i)
 			}
 		}
 	}
@@ -28,7 +28,7 @@ func (ih *InteractionsHandlers) Pay() InteractionCreateResponse {
 			switch i.ApplicationCommandData().Name {
 			case "ta-pago":
 				payResponse := activities.ExecutePayService(i)
-				helpers.InteractionResponseFactory(payResponse, s, i)
+				factory.InteractionResponseFactory(payResponse, s, i)
 			}
 		}
 	}
@@ -40,7 +40,7 @@ func (ih *InteractionsHandlers) Ranking() InteractionCreateResponse {
 			switch i.ApplicationCommandData().Name {
 			case "ranking":
 				rankingResponse, _ := activities.ExecuteRankingService()
-				helpers.InteractionResponseFactory(rankingResponse, s, i)
+				factory.InteractionResponseFactory(rankingResponse, s, i)
 			}
 		}
 	}
@@ -52,7 +52,7 @@ func (ih *InteractionsHandlers) Help() InteractionCreateResponse {
 			switch i.ApplicationCommandData().Name {
 			case "help":
 				helpResponse := activities.HelpCmd()
-				helpers.InteractionResponseFactory(helpResponse, s, i)
+				factory.InteractionResponseFactory(helpResponse, s, i)
 			}
 		}
 	}
