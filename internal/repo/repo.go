@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"time"
 
 	"github.com/leoff00/ta-pago-bot/internal/models"
 )
@@ -58,7 +59,7 @@ func (dur *DiscordUserRepository) Save(du models.DiscordUser) error {
 		return errors.New("você já está inscrito na lista fera")
 	}
 
-	rows, err := db.Exec(`INSERT INTO DISCORD_USERS (id, username, count) VALUES (?, ?, ?)`, du.Id, du.Username, du.Count)
+	rows, err := db.Exec(`INSERT INTO DISCORD_USERS (id, username, updated_at ,count) VALUES (?, ?, ?, ?)`, du.Id, du.Username, 0, du.Count)
 
 	if err != nil {
 		log.Default().Println("Cannot insert data into DB on Repo.", err.Error())
@@ -74,7 +75,6 @@ func (dur *DiscordUserRepository) Save(du models.DiscordUser) error {
 
 	log.Default().Println("Rows affected on Save User ->", affected)
 	return err
-
 }
 
 func (dur *DiscordUserRepository) getUserById(discordId string) *models.DiscordUser {
@@ -125,6 +125,37 @@ func (dur *DiscordUserRepository) IncrementCount(discordId string) error {
 	log.Default().Println("Rows affected on Update Count ->", affected)
 	return err
 
+}
+
+func (dur *DiscordUserRepository) CheckDay() (bool, error) {
+	today := time.Now().Local().Day()
+
+	db, err := sql.Open("sqlite3", "ta_pago.db")
+	if err != nil {
+		log.Default().Println("Cannot open the DB on Repo ->", err.Error())
+		return false, err
+	}
+
+	rows, err := db.Query(`SELECT updated_at FROM DISCORD_USERS`)
+	if err != nil {
+		log.Default().Println("Cannot get users from DB on Repo.", err.Error())
+		return false, err
+	}
+
+	var updated_at int
+
+	rows.Scan(&updated_at)
+
+	if updated_at == 0 {
+		return false, nil
+	}
+
+	if updated_at != today {
+		return false, nil
+	}
+
+	defer db.Close()
+	return true, nil
 }
 
 func (dur *DiscordUserRepository) RestartCount() error {
