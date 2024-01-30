@@ -2,10 +2,12 @@ package services
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leoff00/ta-pago-bot/internal/repo"
 	"github.com/leoff00/ta-pago-bot/pkg/factory"
+	"github.com/leoff00/ta-pago-bot/pkg/strings"
 )
 
 var (
@@ -15,24 +17,25 @@ var (
 func (as *ActivitiesServices) ExecuteJoinService(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
 	du := factory.GetUserData(i)
 	if err := dur.Save(du); err != nil {
+		fmtDescription := fmt.Sprintf("Parece que o canela seca do <@%s> ta tentando me derrubar, TU JA TA INSCRITO SUA MULA!! ", du.Id)
 		return &discordgo.InteractionResponseData{
 			Embeds: MsgEmbedType{
 				&discordgo.MessageEmbed{
-					Title:       "Ops...",
-					Description: "Parece que você tentou se inscrever mais de uma vez. ❌",
+					Title:       "Deu merda aqui!!",
+					Description: fmtDescription,
 					Type:        discordgo.EmbedTypeRich,
 					Color:       10,
 				}},
 		}
 	}
 
-	titleFmt := fmt.Sprintf("%s acabou de se inscrever na lista do TA PAGO!", du.Username)
+	fmtDescription := strings.RandomizeJoinPhrases(du.Id)
 
 	return &discordgo.InteractionResponseData{
 		Embeds: MsgEmbedType{
 			&discordgo.MessageEmbed{
-				Title:       titleFmt,
-				Description: "Para contabilizar na lista, digite o comando /ta-pago toda vez que pagar um treino! 💪🏅",
+				Title:       "Agora é só mandar bala, digite o comando /ta-pago toda vez que buscar o shape meu nobre!! 💪🏅",
+				Description: fmtDescription,
 				Type:        discordgo.EmbedTypeRich,
 				Color:       10,
 			}},
@@ -45,16 +48,16 @@ func (as *ActivitiesServices) ExecutePayService(i *discordgo.InteractionCreate) 
 		return &discordgo.InteractionResponseData{
 			Embeds: MsgEmbedType{
 				&discordgo.MessageEmbed{
-					Title:       "Ops...",
-					Description: "Você não pode submeter um treino para o contador sem se increver!! ❌",
+					Title:       "Deu merda aqui!",
+					Description: fmt.Sprintln(err.Error() + "❌"),
 					Type:        discordgo.EmbedTypeRich,
 					Color:       10,
 				}},
 		}
 	}
 
-	fmtTitle := fmt.Sprintf("%s pagou!!!", du.Username)
-	fmtDescription := fmt.Sprintf("%s acabou de submeter um treino!!!", du.Username)
+	fmtTitle := fmt.Sprintf("<@%s> pagou!!!", du.Id)
+	fmtDescription := strings.RandomizePayPhrases(du.Id)
 
 	return &discordgo.InteractionResponseData{
 		Embeds: MsgEmbedType{
@@ -121,7 +124,7 @@ func (as *ActivitiesServices) ExecuteRankingService() (*discordgo.InteractionRes
 			emojiIter += fmt.Sprintf("\nTOP %d %s - %d %s", i+1, v.Username, v.Count, emojis[i])
 		}
 
-		for i, v := range rank {
+		for i, v := range rank[3:] {
 			restIter += fmt.Sprintf("\nTOP %d %s - %d", i+4, v.Username, v.Count)
 		}
 
@@ -140,14 +143,34 @@ func (as *ActivitiesServices) ExecuteRankingService() (*discordgo.InteractionRes
 	return irdata, embed
 }
 
+func (as *ActivitiesServices) RestartCount() *discordgo.InteractionResponseData {
+
+	if err := dur.RestartCount(); err != nil {
+		log.Default().Println("Cannot restart the the count in database On Service", err.Error())
+	}
+
+	return &discordgo.InteractionResponseData{
+		Embeds: MsgEmbedType{
+			&discordgo.MessageEmbed{
+				Title:       "Veja abaixo como os comandos funcionam.",
+				Description: "fmtDescription",
+				Type:        discordgo.EmbedTypeRich,
+				Color:       10,
+			}},
+	}
+}
+
 func (as *ActivitiesServices) HelpCmd() *discordgo.InteractionResponseData {
 	fmtDescription := fmt.Sprintln(`
 		/inscrever: Este comando te incluirá na lista de contagem de treinos o autor do comando. ✅ 
 
-		/ta-pago: Este comando alidara a contagem de treino do autor do comando, aumentando sua posição no ranking. 💪
+		/ta-pago: Este comando validara a contagem de treino do autor do comando, aumentando sua posição no ranking. 💪
 	
 		/ranking: Use este comando para visualizar a lista atualizada dos **10 Primeiros** participantes. 🏆🏅
+
+		/restart: Este comando é utilizado pelos administradores do servidor para resetar a contagem de treinos caso algo dê problema. 🫡💪
 		`)
+
 	return &discordgo.InteractionResponseData{
 		Embeds: MsgEmbedType{
 			&discordgo.MessageEmbed{

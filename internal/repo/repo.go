@@ -59,7 +59,7 @@ func (dur *DiscordUserRepository) Save(du models.DiscordUser) error {
 		return errors.New("você já está inscrito na lista fera")
 	}
 
-	rows, err := db.Exec(`INSERT INTO DISCORD_USERS (id, username, updated_at ,count) VALUES (?, ?, ?, ?)`, du.Id, du.Username, 0, du.Count)
+	rows, err := db.Exec(`INSERT INTO DISCORD_USERS (id, username, updated_at, count) VALUES (?, ?, ?, ?)`, du.Id, du.Username, 0, du.Count)
 
 	if err != nil {
 		log.Default().Println("Cannot insert data into DB on Repo.", err.Error())
@@ -85,16 +85,16 @@ func (dur *DiscordUserRepository) getUserById(discordId string) *models.DiscordU
 	}
 
 	var du models.DiscordUser
-	row := db.QueryRow(`SELECT id, username, count FROM DISCORD_USERS WHERE id = ?`, discordId)
+	row := db.QueryRow(`SELECT id, username, updated_at, count FROM DISCORD_USERS WHERE id = ?`, discordId)
 
-	row.Scan(&du.Id, &du.Username, &du.Count)
+	row.Scan(&du.Id, &du.Username, &du.Updated_at, &du.Count)
 
 	defer db.Close()
 	return &du
 }
 
 func (dur *DiscordUserRepository) IncrementCount(discordId string) error {
-
+	today := time.Now().Local().Day()
 	db, err := sql.Open("sqlite3", "ta_pago.db")
 	if err != nil {
 		log.Default().Println("Cannot open the DB on Repo ->", err.Error())
@@ -102,12 +102,17 @@ func (dur *DiscordUserRepository) IncrementCount(discordId string) error {
 	}
 
 	usr := dur.getUserById(discordId)
+	ok := dur.checkDay(usr.Updated_at)
+
+	if !ok {
+		return errors.New("seu frango! tu já treinou hoje mermão, volta amanhã")
+	}
 
 	if usr.Id == "" {
 		return errors.New("você precisa antes se inscrever na lista fera")
 	}
 
-	rows, err := db.Exec(`UPDATE DISCORD_USERS SET count = count + 1 WHERE id = ?`, discordId)
+	rows, err := db.Exec(`UPDATE DISCORD_USERS SET updated_at = ?, count = count + 1 WHERE id = ?`, today, discordId)
 
 	if err != nil {
 		log.Default().Println("Cannot update the count from DB on Repo.", err.Error())
@@ -127,35 +132,10 @@ func (dur *DiscordUserRepository) IncrementCount(discordId string) error {
 
 }
 
-func (dur *DiscordUserRepository) CheckDay() (bool, error) {
+func (dur *DiscordUserRepository) checkDay(updatedAt int) bool {
+	//should return true if updatedat is dif from today
 	today := time.Now().Local().Day()
-
-	db, err := sql.Open("sqlite3", "ta_pago.db")
-	if err != nil {
-		log.Default().Println("Cannot open the DB on Repo ->", err.Error())
-		return false, err
-	}
-
-	rows, err := db.Query(`SELECT updated_at FROM DISCORD_USERS`)
-	if err != nil {
-		log.Default().Println("Cannot get users from DB on Repo.", err.Error())
-		return false, err
-	}
-
-	var updated_at int
-
-	rows.Scan(&updated_at)
-
-	if updated_at == 0 {
-		return false, nil
-	}
-
-	if updated_at != today {
-		return false, nil
-	}
-
-	defer db.Close()
-	return true, nil
+	return updatedAt != today
 }
 
 func (dur *DiscordUserRepository) RestartCount() error {
