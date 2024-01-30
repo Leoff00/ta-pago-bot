@@ -15,6 +15,17 @@
 
 - /ta-pago: Should increment the count table in DB. check
 
-- /ranking: Should select and filter in the DB the name and the count table. checmk
+- /ranking: Should select and filter in the DB the name and the count table. check
   **Implement ranking service, exec queries in DB**
   **and return the value then format in discord embed**
+
+### FIXES:
+
+- /ta-pago: insert a new field in the DB to validate the day which the user submit
+  the workout. check
+
+- /ta-pago: when user submit a workout, the response message should be a custom message about
+  mocking the user. check
+
+- /ranking: fix the bug that when ranking is greater than 3 and less than 10, the string
+  is repeating the numbers. check
