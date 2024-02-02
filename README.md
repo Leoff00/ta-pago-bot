@@ -51,7 +51,7 @@ This software uses the following open source packages:
 - [golang](https://go.dev/)
 - [discordgo](https://github.com/bwmarrin/discordgo)
 - [viper](https://github.com/spf13/viper)
-- [postgres](https://www.postgresql.org/)
+- [sqlite3](https://www.sqlite.org/index.html)
 - [docker](https://www.docker.com/)
 
 ## License
