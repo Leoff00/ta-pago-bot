@@ -164,3 +164,37 @@ func (dur *DiscordUserRepository) RestartCount() error {
 	log.Default().Println("Rows affected on Update Count ->", affected)
 	return err
 }
+
+func (dur *DiscordUserRepository) ModrestartCount(id string) error {
+	db, err := sql.Open("sqlite3", "ta_pago.db")
+	if err != nil {
+		log.Default().Println("Cannot open the DB on Repo ->", err.Error())
+		return err
+	}
+
+	mod1 := "241680344791646209"
+	mod2 := "304815188568309760"
+	mod3 := "351037407166070786"
+
+	if id == mod1 || id == mod2 || id == mod3 {
+		rows, err := db.Exec(`UPDATE DISCORD_USERS SET count = 0`)
+
+		if err != nil {
+			log.Default().Println("Cannot restart the count from DB on Repo.", err.Error())
+			return err
+		}
+
+		affected, err := rows.RowsAffected()
+
+		if err != nil {
+			log.Default().Println("Cannot get the affected row line numbers on Repo.", err.Error())
+			return err
+		}
+
+		defer db.Close()
+
+		log.Default().Println("Rows affected on Update Count ->", affected)
+		return err
+	}
+	return nil
+}

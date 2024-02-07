@@ -160,6 +160,32 @@ func (as *ActivitiesServices) RestartCount() *discordgo.InteractionResponseData 
 	}
 }
 
+func (as *ActivitiesServices) RestartCmd(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
+	du := factory.GetUserData(i)
+	fmtDescription := fmt.Sprintf("<@%s> usou o comando para resetar as contagens dos frangos!", du.Id)
+	if err := dur.ModrestartCount(du.Id); err != nil {
+		return &discordgo.InteractionResponseData{
+			Embeds: MsgEmbedType{
+				&discordgo.MessageEmbed{
+					Title:       "Deu merda aqui!!!",
+					Description: "O comando não pode ser executado, verifica essa parada ai mermão!!",
+					Type:        discordgo.EmbedTypeRich,
+					Color:       10,
+				}},
+		}
+	}
+
+	return &discordgo.InteractionResponseData{
+		Embeds: MsgEmbedType{
+			&discordgo.MessageEmbed{
+				Title:       "TABELA RESETADA!!!",
+				Description: fmtDescription,
+				Type:        discordgo.EmbedTypeRich,
+				Color:       10,
+			}},
+	}
+}
+
 func (as *ActivitiesServices) HelpCmd() *discordgo.InteractionResponseData {
 	fmtDescription := fmt.Sprintln(`
 		/inscrever: Este comando te incluirá na lista de contagem de treinos o autor do comando. ✅ 

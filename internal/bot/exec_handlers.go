@@ -46,6 +46,18 @@ func (ih *InteractionsHandlers) Ranking() InteractionCreateResponse {
 	}
 }
 
+func (ih *InteractionsHandlers) RestartCmd() InteractionCreateResponse {
+	return func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		if i.Type == AppCmd {
+			switch i.ApplicationCommandData().Name {
+			case "restart":
+				restartResponse := activities.RestartCmd(i)
+				factory.InteractionResponseFactory(restartResponse, s, i)
+			}
+		}
+	}
+}
+
 func (ih *InteractionsHandlers) Help() InteractionCreateResponse {
 	return func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if i.Type == AppCmd {
@@ -64,5 +76,6 @@ func ExecHandlers(bot *discordgo.Session) {
 	bot.AddHandler(ih.Join())
 	bot.AddHandler(ih.Pay())
 	bot.AddHandler(ih.Ranking())
+	bot.AddHandler(ih.RestartCmd())
 	bot.AddHandler(ih.Help())
 }
