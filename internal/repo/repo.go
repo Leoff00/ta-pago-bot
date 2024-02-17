@@ -9,6 +9,8 @@ import (
 	"github.com/leoff00/ta-pago-bot/internal/models"
 )
 
+var	todayUtcTimestamp = "unixepoch()"
+
 type DiscordUserRepository struct{}
 
 func (dur *DiscordUserRepository) GetUsers() []models.DiscordReturnType {
@@ -59,7 +61,7 @@ func (dur *DiscordUserRepository) Save(du models.DiscordUser) error {
 		return errors.New("você já está inscrito na lista fera")
 	}
 
-	rows, err := db.Exec(`INSERT INTO DISCORD_USERS (id, username, updated_at, count) VALUES (?, ?, ?, ?)`, du.Id, du.Username, 0, du.Count)
+	rows, err := db.Exec(`INSERT INTO DISCORD_USERS (id, username, updated_at, count) VALUES (?, ?, ?, ?)`, du.Id, du.Username, todayUtcTimestamp, du.Count)
 
 	if err != nil {
 		log.Default().Println("Cannot insert data into DB on Repo.", err.Error())
@@ -111,8 +113,7 @@ func (dur *DiscordUserRepository) IncrementCount(discordId string) error {
 		return errors.New("você precisa antes se inscrever na lista fera")
 	}
 
-	rows, err := db.Exec(`UPDATE DISCORD_USERS SET count = count + 1 WHERE id = ?`, discordId)
-
+	rows, err := db.Exec(`UPDATE DISCORD_USERS SET updated_at = ?, count = count + 1 WHERE id = ?`, todayUtcTimestamp, discordId)
 	if err != nil {
 		log.Default().Println("Cannot update the count from DB on Repo.", err.Error())
 	}
