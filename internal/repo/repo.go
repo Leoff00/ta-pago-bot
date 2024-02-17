@@ -104,8 +104,9 @@ func (dur *DiscordUserRepository) IncrementCount(discordId string) error {
 
 	usr := dur.getUserById(discordId)
 	ok := dur.checkDay(usr.Updated_at)
+	userAlreadyPaid := !ok && usr.Count > 0
 
-	if !ok {
+	if userAlreadyPaid {
 		return errors.New("seu frango! tu já treinou hoje mermão, volta amanhã")
 	}
 
@@ -134,8 +135,9 @@ func (dur *DiscordUserRepository) IncrementCount(discordId string) error {
 
 func (dur *DiscordUserRepository) checkDay(updatedAt int) bool {
 	//should return true if updatedat is dif from today
-	today := time.Now().Local().Day()
-	return updatedAt != today
+	today := time.Now().UTC().Day()
+	dayUpdated := time.Unix(updatedAt, 0).Day()
+	return today != dayUpdated
 }
 
 func (dur *DiscordUserRepository) RestartCount() error {
