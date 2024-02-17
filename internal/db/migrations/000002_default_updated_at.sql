@@ -1,0 +1,2 @@
+ALTER TABLE DISCORD_USERS
+ALTER COLUMN updated_at SET DEFAULT 'unixepoch()';

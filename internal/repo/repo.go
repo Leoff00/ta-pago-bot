@@ -94,7 +94,6 @@ func (dur *DiscordUserRepository) getUserById(discordId string) *models.DiscordU
 }
 
 func (dur *DiscordUserRepository) IncrementCount(discordId string) error {
-	today := time.Now().Local().Day()
 	db, err := sql.Open("sqlite3", "ta_pago.db")
 	if err != nil {
 		log.Default().Println("Cannot open the DB on Repo ->", err.Error())
@@ -112,7 +111,7 @@ func (dur *DiscordUserRepository) IncrementCount(discordId string) error {
 		return errors.New("você precisa antes se inscrever na lista fera")
 	}
 
-	rows, err := db.Exec(`UPDATE DISCORD_USERS SET updated_at = ?, count = count + 1 WHERE id = ?`, today, discordId)
+	rows, err := db.Exec(`UPDATE DISCORD_USERS SET count = count + 1 WHERE id = ?`, discordId)
 
 	if err != nil {
 		log.Default().Println("Cannot update the count from DB on Repo.", err.Error())
