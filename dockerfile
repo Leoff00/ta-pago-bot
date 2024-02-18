@@ -10,7 +10,9 @@ RUN apk add --no-cache gcc libc-dev
 RUN CGO_ENABLED=1 go build -o bin/ta_pago_bot cmd/main.go
 
 # RELEASE STAGE
-FROM scratch
+FROM alpine:3.19.1
+
+ENV TZ="America/Sao_Paulo"
 
 WORKDIR /
 

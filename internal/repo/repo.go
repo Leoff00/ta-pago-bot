@@ -9,7 +9,7 @@ import (
 	"github.com/leoff00/ta-pago-bot/internal/models"
 )
 
-var	todayUtcTimestamp = "unixepoch()"
+var todayUtcTimestamp = "unixepoch()"
 
 type DiscordUserRepository struct{}
 
@@ -23,7 +23,6 @@ func (dur *DiscordUserRepository) GetUsers() []models.DiscordReturnType {
 	var arr []models.DiscordReturnType
 
 	rows, err := db.Query(`SELECT username, count FROM DISCORD_USERS ORDER BY count DESC LIMIT 10`)
-
 	if err != nil {
 		log.Default().Println("Cannot get users from DB on Repo.", err.Error())
 	}
@@ -48,7 +47,6 @@ func (dur *DiscordUserRepository) GetUsers() []models.DiscordReturnType {
 }
 
 func (dur *DiscordUserRepository) Save(du models.DiscordUser) error {
-
 	db, err := sql.Open("sqlite3", "ta_pago.db")
 	if err != nil {
 		log.Default().Println("Cannot open the DB on Repo ->", err.Error())
@@ -61,15 +59,19 @@ func (dur *DiscordUserRepository) Save(du models.DiscordUser) error {
 		return errors.New("você já está inscrito na lista fera")
 	}
 
-	rows, err := db.Exec(`INSERT INTO DISCORD_USERS (id, username, updated_at, count) VALUES (?, ?, ?, ?)`, du.Id, du.Username, todayUtcTimestamp, du.Count)
-
+	rows, err := db.Exec(
+		`INSERT INTO DISCORD_USERS (id, username, updated_at, count) VALUES (?, ?, ?, ?)`,
+		du.Id,
+		du.Username,
+		todayUtcTimestamp,
+		du.Count,
+	)
 	if err != nil {
 		log.Default().Println("Cannot insert data into DB on Repo.", err.Error())
 		return err
 	}
 
 	affected, err := rows.RowsAffected()
-
 	if err != nil {
 		log.Default().Println("Cannot get the affected row line numbers on Repo.", err.Error())
 		return err
@@ -87,7 +89,10 @@ func (dur *DiscordUserRepository) getUserById(discordId string) *models.DiscordU
 	}
 
 	var du models.DiscordUser
-	row := db.QueryRow(`SELECT id, username, updated_at, count FROM DISCORD_USERS WHERE id = ?`, discordId)
+	row := db.QueryRow(
+		`SELECT id, username, updated_at, count FROM DISCORD_USERS WHERE id = ?`,
+		discordId,
+	)
 
 	row.Scan(&du.Id, &du.Username, &du.Updated_at, &du.Count)
 
@@ -113,13 +118,16 @@ func (dur *DiscordUserRepository) IncrementCount(discordId string) error {
 		return errors.New("você precisa antes se inscrever na lista fera")
 	}
 
-	rows, err := db.Exec(`UPDATE DISCORD_USERS SET updated_at = ?, count = count + 1 WHERE id = ?`, todayUtcTimestamp, discordId)
+	rows, err := db.Exec(
+		`UPDATE DISCORD_USERS SET updated_at = ?, count = count + 1 WHERE id = ?`,
+		todayUtcTimestamp,
+		discordId,
+	)
 	if err != nil {
 		log.Default().Println("Cannot update the count from DB on Repo.", err.Error())
 	}
 
 	affected, err := rows.RowsAffected()
-
 	if err != nil {
 		log.Default().Println("Cannot get the affected row line numbers on Repo.", err.Error())
 		return err
@@ -129,13 +137,13 @@ func (dur *DiscordUserRepository) IncrementCount(discordId string) error {
 
 	log.Default().Println("Rows affected on Update Count ->", affected)
 	return err
-
 }
 
 func (dur *DiscordUserRepository) ifPaidToday(usr *models.DiscordUser) bool {
-	//should return true if updatedat is dif from today
-	today := time.Now().UTC().Day()
-	dayUpdated := time.Unix(usr.Updated_at, 0).Day()
+	// should return true if updatedat is dif from today
+	loc, _ := time.LoadLocation("America/Sao_Paulo")
+	today := time.Now().UTC().In(loc).Day()
+	dayUpdated := time.Unix(int64(usr.Updated_at), 0).In(loc).Day()
 	return today == dayUpdated && usr.Count > 0
 }
 
@@ -147,14 +155,12 @@ func (dur *DiscordUserRepository) RestartCount() error {
 	}
 
 	rows, err := db.Exec(`UPDATE DISCORD_USERS SET count = 0`)
-
 	if err != nil {
 		log.Default().Println("Cannot restart the count from DB on Repo.", err.Error())
 		return err
 	}
 
 	affected, err := rows.RowsAffected()
-
 	if err != nil {
 		log.Default().Println("Cannot get the affected row line numbers on Repo.", err.Error())
 		return err
@@ -177,25 +183,25 @@ func (dur *DiscordUserRepository) ModrestartCount(id string) error {
 	mod2 := "304815188568309760"
 	mod3 := "351037407166070786"
 
-	if id == mod1 || id == mod2 || id == mod3 {
-		rows, err := db.Exec(`UPDATE DISCORD_USERS SET count = 0`)
+	if id != mod1 || id != mod2 || id != mod3 {
+		return errors.New(".")
+	}
 
-		if err != nil {
-			log.Default().Println("Cannot restart the count from DB on Repo.", err.Error())
-			return err
-		}
-
-		affected, err := rows.RowsAffected()
-
-		if err != nil {
-			log.Default().Println("Cannot get the affected row line numbers on Repo.", err.Error())
-			return err
-		}
-
-		defer db.Close()
-
-		log.Default().Println("Rows affected on Update Count ->", affected)
+	rows, err := db.Exec(`UPDATE DISCORD_USERS SET count = 0`)
+	if err != nil {
+		log.Default().Println("Cannot restart the count from DB on Repo.", err.Error())
 		return err
 	}
+
+	affected, err := rows.RowsAffected()
+	if err != nil {
+		log.Default().Println("Cannot get the affected row line numbers on Repo.", err.Error())
+		return err
+	}
+
+	defer db.Close()
+
+	log.Default().Println("Rows affected on Update Count ->", affected)
+
 	return nil
 }

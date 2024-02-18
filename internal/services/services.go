@@ -5,19 +5,23 @@ import (
 	"log"
 
 	"github.com/bwmarrin/discordgo"
+
 	"github.com/leoff00/ta-pago-bot/internal/repo"
 	"github.com/leoff00/ta-pago-bot/pkg/factory"
 	"github.com/leoff00/ta-pago-bot/pkg/strings"
 )
 
-var (
-	dur = repo.DiscordUserRepository{}
-)
+var dur = repo.DiscordUserRepository{}
 
-func (as *ActivitiesServices) ExecuteJoinService(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
+func (as *ActivitiesServices) ExecuteJoinService(
+	i *discordgo.InteractionCreate,
+) *discordgo.InteractionResponseData {
 	du := factory.GetUserData(i)
 	if err := dur.Save(du); err != nil {
-		fmtDescription := fmt.Sprintf("Parece que o canela seca do <@%s> ta tentando me derrubar, TU JA TA INSCRITO SUA MULA!! ", du.Id)
+		fmtDescription := fmt.Sprintf(
+			"Parece que o canela seca do <@%s> ta tentando me derrubar, TU JA TA INSCRITO SUA MULA!! ",
+			du.Id,
+		)
 		return &discordgo.InteractionResponseData{
 			Embeds: MsgEmbedType{
 				&discordgo.MessageEmbed{
@@ -25,7 +29,8 @@ func (as *ActivitiesServices) ExecuteJoinService(i *discordgo.InteractionCreate)
 					Description: fmtDescription,
 					Type:        discordgo.EmbedTypeRich,
 					Color:       10,
-				}},
+				},
+			},
 		}
 	}
 
@@ -38,11 +43,14 @@ func (as *ActivitiesServices) ExecuteJoinService(i *discordgo.InteractionCreate)
 				Description: fmtDescription,
 				Type:        discordgo.EmbedTypeRich,
 				Color:       10,
-			}},
+			},
+		},
 	}
 }
 
-func (as *ActivitiesServices) ExecutePayService(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
+func (as *ActivitiesServices) ExecutePayService(
+	i *discordgo.InteractionCreate,
+) *discordgo.InteractionResponseData {
 	du := factory.GetUserData(i)
 	if err := dur.IncrementCount(du.Id); err != nil {
 		return &discordgo.InteractionResponseData{
@@ -52,7 +60,8 @@ func (as *ActivitiesServices) ExecutePayService(i *discordgo.InteractionCreate) 
 					Description: fmt.Sprintln(err.Error() + "❌"),
 					Type:        discordgo.EmbedTypeRich,
 					Color:       10,
-				}},
+				},
+			},
 		}
 	}
 
@@ -66,7 +75,8 @@ func (as *ActivitiesServices) ExecutePayService(i *discordgo.InteractionCreate) 
 				Description: fmtDescription,
 				Type:        discordgo.EmbedTypeRich,
 				Color:       10,
-			}},
+			},
+		},
 	}
 }
 
@@ -144,7 +154,6 @@ func (as *ActivitiesServices) ExecuteRankingService() (*discordgo.InteractionRes
 }
 
 func (as *ActivitiesServices) RestartCount() *discordgo.InteractionResponseData {
-
 	if err := dur.RestartCount(); err != nil {
 		log.Default().Println("Cannot restart the the count in database On Service", err.Error())
 	}
@@ -156,22 +165,29 @@ func (as *ActivitiesServices) RestartCount() *discordgo.InteractionResponseData 
 				Description: "fmtDescription",
 				Type:        discordgo.EmbedTypeRich,
 				Color:       10,
-			}},
+			},
+		},
 	}
 }
 
-func (as *ActivitiesServices) RestartCmd(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
+func (as *ActivitiesServices) RestartCmd(
+	i *discordgo.InteractionCreate,
+) *discordgo.InteractionResponseData {
 	du := factory.GetUserData(i)
-	fmtDescription := fmt.Sprintf("<@%s> usou o comando para resetar as contagens dos frangos!", du.Id)
+	fmtDescription := fmt.Sprintf(
+		"<@%s> usou o comando para resetar as contagens dos frangos!",
+		du.Id,
+	)
 	if err := dur.ModrestartCount(du.Id); err != nil {
 		return &discordgo.InteractionResponseData{
 			Embeds: MsgEmbedType{
 				&discordgo.MessageEmbed{
 					Title:       "Deu merda aqui!!!",
-					Description: "O comando não pode ser executado, verifica essa parada ai mermão!!",
+					Description: "O comando só pode ser executado por mods mermão!!",
 					Type:        discordgo.EmbedTypeRich,
 					Color:       10,
-				}},
+				},
+			},
 		}
 	}
 
@@ -182,7 +198,8 @@ func (as *ActivitiesServices) RestartCmd(i *discordgo.InteractionCreate) *discor
 				Description: fmtDescription,
 				Type:        discordgo.EmbedTypeRich,
 				Color:       10,
-			}},
+			},
+		},
 	}
 }
 
@@ -204,6 +221,7 @@ func (as *ActivitiesServices) HelpCmd() *discordgo.InteractionResponseData {
 				Description: fmtDescription,
 				Type:        discordgo.EmbedTypeRich,
 				Color:       10,
-			}},
+			},
+		},
 	}
 }
