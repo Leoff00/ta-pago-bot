@@ -9,6 +9,8 @@ import (
 	"github.com/leoff00/ta-pago-bot/internal/models"
 )
 
+var	todayUtcTimestamp = "unixepoch()"
+
 type DiscordUserRepository struct{}
 
 func (dur *DiscordUserRepository) GetUsers() []models.DiscordReturnType {
@@ -59,7 +61,7 @@ func (dur *DiscordUserRepository) Save(du models.DiscordUser) error {
 		return errors.New("você já está inscrito na lista fera")
 	}
 
-	rows, err := db.Exec(`INSERT INTO DISCORD_USERS (id, username, updated_at, count) VALUES (?, ?, ?, ?)`, du.Id, du.Username, 0, du.Count)
+	rows, err := db.Exec(`INSERT INTO DISCORD_USERS (id, username, updated_at, count) VALUES (?, ?, ?, ?)`, du.Id, du.Username, todayUtcTimestamp, du.Count)
 
 	if err != nil {
 		log.Default().Println("Cannot insert data into DB on Repo.", err.Error())
@@ -94,7 +96,6 @@ func (dur *DiscordUserRepository) getUserById(discordId string) *models.DiscordU
 }
 
 func (dur *DiscordUserRepository) IncrementCount(discordId string) error {
-	today := time.Now().Local().Day()
 	db, err := sql.Open("sqlite3", "ta_pago.db")
 	if err != nil {
 		log.Default().Println("Cannot open the DB on Repo ->", err.Error())
@@ -102,9 +103,9 @@ func (dur *DiscordUserRepository) IncrementCount(discordId string) error {
 	}
 
 	usr := dur.getUserById(discordId)
-	ok := dur.checkDay(usr.Updated_at)
+	userPaidToday := dur.ifPaidToday(usr)
 
-	if !ok {
+	if userPaidToday {
 		return errors.New("seu frango! tu já treinou hoje mermão, volta amanhã")
 	}
 
@@ -112,8 +113,7 @@ func (dur *DiscordUserRepository) IncrementCount(discordId string) error {
 		return errors.New("você precisa antes se inscrever na lista fera")
 	}
 
-	rows, err := db.Exec(`UPDATE DISCORD_USERS SET updated_at = ?, count = count + 1 WHERE id = ?`, today, discordId)
-
+	rows, err := db.Exec(`UPDATE DISCORD_USERS SET updated_at = ?, count = count + 1 WHERE id = ?`, todayUtcTimestamp, discordId)
 	if err != nil {
 		log.Default().Println("Cannot update the count from DB on Repo.", err.Error())
 	}
@@ -132,10 +132,11 @@ func (dur *DiscordUserRepository) IncrementCount(discordId string) error {
 
 }
 
-func (dur *DiscordUserRepository) checkDay(updatedAt int) bool {
+func (dur *DiscordUserRepository) ifPaidToday(usr *models.DiscordUser) bool {
 	//should return true if updatedat is dif from today
-	today := time.Now().Local().Day()
-	return updatedAt != today
+	today := time.Now().UTC().Day()
+	dayUpdated := time.Unix(usr.Updated_at, 0).Day()
+	return today == dayUpdated && usr.Count > 0
 }
 
 func (dur *DiscordUserRepository) RestartCount() error {
