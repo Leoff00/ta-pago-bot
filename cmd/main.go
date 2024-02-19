@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-
 	"github.com/leoff00/ta-pago-bot/internal/bot"
-	"github.com/leoff00/ta-pago-bot/internal/db"
+	"github.com/leoff00/ta-pago-bot/pkg/env"
+	setup2 "github.com/leoff00/ta-pago-bot/pkg/setup"
 )
 
 const displayArt = "\033[36m" + ` 
@@ -22,7 +22,8 @@ $$$$$$$$\  $$$$$$\        $$$$$$$\   $$$$$$\   $$$$$$\   $$$$$$\  $$\
 
 func main() {
 	fmt.Println(displayArt)
-	db.Setup()
-
+	setup2.Pwd()
+	setup2.DB() // <- TODO: inject the return of this function into repository, same for the services
+	setup2.TimeZone(env.Getenv("TZ_BOT"))
 	bot.Start()
 }

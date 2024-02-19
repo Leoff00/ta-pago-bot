@@ -9,8 +9,8 @@ import (
 var (
 	cmds = []*discordgo.ApplicationCommand{
 		{
-			Name:        "restart",
-			Description: "Restart the db count (Mod exclusive only).",
+			Name:        "reset",
+			Description: "⚠️ Reset the db count (Mod exclusive only).⚠️",
 		},
 		{
 			Name:        "help",

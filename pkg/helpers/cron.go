@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	dur = repo.DiscordUserRepository{}
+	dur = repo.UserRepository{}
 )
 
 type CronTasks struct {
@@ -23,7 +23,7 @@ func (ct *CronTasks) ScheduleWipeCountMessage(s *discordgo.Session) {
 
 	if _, err := c.AddFunc("@monthly", func() {
 
-		if err := dur.RestartCount(); err != nil {
+		if err := dur.ResetCount(); err != nil {
 			log.Default().Println(err.Error())
 		}
 

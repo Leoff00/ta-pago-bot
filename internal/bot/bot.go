@@ -19,8 +19,7 @@ var (
 )
 
 func Start() {
-	token := env.Getenv("TOKEN")
-	bot, err := discordgo.New(fmt.Sprintf("Bot %s", token))
+	bot, err := discordgo.New(fmt.Sprintf("Bot %s", env.Getenv("TOKEN")))
 
 	if err != nil {
 		log.Default().Fatalln(`
@@ -31,19 +30,16 @@ func Start() {
 	}
 
 	user, err := bot.User("@me")
-
 	if err != nil {
 		log.Default().Fatalln("Discord bot user not attached", err.Error())
 	}
-
 	botId = user.ID
 
 	ExecHandlers(bot)
 	c.ExecuteTasks(bot)
 	c.Cron.Start()
 
-	bot.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
-	bot.Identify.Intents = discordgo.PermissionManageMessages
+	bot.Identify.Intents = discordgo.IntentsAllWithoutPrivileged | discordgo.PermissionManageMessages
 
 	DeleteCommands(botId)
 

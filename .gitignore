@@ -27,5 +27,10 @@ go.work
 # Custom files
 .env
 .env.local
-
+ta_pago.dbo
+ta_pago_bot
+*.db
 # End of https://www.toptal.com/developers/gitignore/api/go
+*seed*sql
+
+.idea

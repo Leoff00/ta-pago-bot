@@ -3,7 +3,7 @@ package bot
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leoff00/ta-pago-bot/internal/services"
-	"github.com/leoff00/ta-pago-bot/pkg/factory"
+	"github.com/leoff00/ta-pago-bot/pkg/discord"
 )
 
 var (
@@ -16,7 +16,7 @@ func (ih *InteractionsHandlers) Join() InteractionCreateResponse {
 			switch i.ApplicationCommandData().Name {
 			case "inscrever":
 				joinResponse := activities.ExecuteJoinService(i)
-				factory.InteractionResponseFactory(joinResponse, s, i)
+				discord.InteractionResponseFactory(joinResponse, s, i)
 			}
 		}
 	}
@@ -28,7 +28,7 @@ func (ih *InteractionsHandlers) Pay() InteractionCreateResponse {
 			switch i.ApplicationCommandData().Name {
 			case "ta-pago":
 				payResponse := activities.ExecutePayService(i)
-				factory.InteractionResponseFactory(payResponse, s, i)
+				discord.InteractionResponseFactory(payResponse, s, i)
 			}
 		}
 	}
@@ -40,19 +40,19 @@ func (ih *InteractionsHandlers) Ranking() InteractionCreateResponse {
 			switch i.ApplicationCommandData().Name {
 			case "ranking":
 				rankingResponse, _ := activities.ExecuteRankingService()
-				factory.InteractionResponseFactory(rankingResponse, s, i)
+				discord.InteractionResponseFactory(rankingResponse, s, i)
 			}
 		}
 	}
 }
 
-func (ih *InteractionsHandlers) RestartCmd() InteractionCreateResponse {
+func (ih *InteractionsHandlers) Reset() InteractionCreateResponse {
 	return func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if i.Type == AppCmd {
 			switch i.ApplicationCommandData().Name {
-			case "restart":
-				restartResponse := activities.RestartCmd(i)
-				factory.InteractionResponseFactory(restartResponse, s, i)
+			case "reset":
+				restartResponse := activities.ExecuteReset(i)
+				discord.InteractionResponseFactory(restartResponse, s, i)
 			}
 		}
 	}
@@ -64,7 +64,7 @@ func (ih *InteractionsHandlers) Help() InteractionCreateResponse {
 			switch i.ApplicationCommandData().Name {
 			case "help":
 				helpResponse := activities.HelpCmd()
-				factory.InteractionResponseFactory(helpResponse, s, i)
+				discord.InteractionResponseFactory(helpResponse, s, i)
 			}
 		}
 	}
@@ -76,6 +76,6 @@ func ExecHandlers(bot *discordgo.Session) {
 	bot.AddHandler(ih.Join())
 	bot.AddHandler(ih.Pay())
 	bot.AddHandler(ih.Ranking())
-	bot.AddHandler(ih.RestartCmd())
+	bot.AddHandler(ih.Reset())
 	bot.AddHandler(ih.Help())
 }

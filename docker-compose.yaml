@@ -3,17 +3,17 @@ services:
   app:
     image: leoff00/tapagobot:latest
     container_name: tapago
-    build: 
-      dockerfile: dockerfile
-      context: .
     restart: on-failure
     environment:
       TOKEN: ${TOKEN}
       CHANNEL_ID: ${CHANNEL_ID}
-    networks:
-      - tapago_network
+      MODS_ID: ${MODS_ID}
+    volumes:
+      - /db:/app/db # This is the path to the database
     ports:
       - 4000:4000
+    networks:
+      - tapago_network
 
 networks:
   tapago_network:
