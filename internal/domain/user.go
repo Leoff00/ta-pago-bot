@@ -37,6 +37,14 @@ func (u *User) Pay() {
 	u.Count++
 }
 
+func (u *User) GetNickname() string {
+	nickname := u.Username
+	if u.Nickname != "" {
+		nickname = u.Nickname
+	}
+	return nickname
+}
+
 func (u *User) AlreadySubmitted() bool {
 	today := time.Now().Day()
 	return u.Updated_at == today

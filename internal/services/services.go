@@ -9,20 +9,26 @@ import (
 	"github.com/leoff00/ta-pago-bot/internal/repo"
 	"github.com/leoff00/ta-pago-bot/pkg/discord"
 	"github.com/leoff00/ta-pago-bot/pkg/env"
-	"github.com/leoff00/ta-pago-bot/pkg/phrases"
+	"github.com/leoff00/ta-pago-bot/pkg/helpers"
 	"log"
 	"slices"
 	"strings"
 )
 
-var (
-	repository = repo.UserRepository{}
-)
+type ActivitiesServices struct {
+	repository *repo.UserRepository
+}
 
-func (as *ActivitiesServices) ExecuteJoinService(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
+func NewActivitiesServices(repository *repo.UserRepository) *ActivitiesServices {
+	return &ActivitiesServices{
+		repository: repository,
+	}
+}
+
+func (as *ActivitiesServices) ExecuteJoin(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
 	mentionReference := i.Member.Mention()
 	discordUser := discord.GetUserData(i)
-	alreadyExists, _ := repository.ExistsById(discordUser.Id)
+	alreadyExists, _ := as.repository.ExistsById(discordUser.Id)
 	if alreadyExists {
 		err := errors.New(fmt.Sprintf("Parece que o canela seca do %s ta tentando me derrubar, TU JA TA INSCRITO SUA MULA!! ", mentionReference))
 		return failOutput(err)
@@ -37,19 +43,22 @@ func (as *ActivitiesServices) ExecuteJoinService(i *discordgo.InteractionCreate)
 		return failOutput(errors.New("Ocorreu um erro inesperado. Não foi possível criar o usuário"))
 
 	}
-	err = repository.Create(user)
+	err = as.repository.Create(user)
 	if err != nil {
 		return failOutput(errors.New("Ocorreu um erro inesperado. Não foi possível criar o usuário"))
 	}
 
 	title := "Agora é só mandar bala, digite o comando /ta-pago toda vez que buscar o shape meu nobre!! 💪🏅"
-	description := phrases.RandomizeJoinPhrases(mentionReference)
+	description := helpers.RandomizeJoinPhrases(mentionReference)
 	return successOutput(title, description)
 }
 
-func (as *ActivitiesServices) ExecutePayService(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
+func (as *ActivitiesServices) ExecutePay(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
 	discordUsr := discord.GetUserData(i)
-	user := repository.GetUserById(i.Member.User.ID)
+	user, err := as.repository.GetUserById(i.Member.User.ID)
+	if err != nil {
+		return failOutput(nil)
+	}
 	aggregate := &models.UserAggregate{
 		User:        user,
 		DiscordUser: discordUsr,
@@ -63,95 +72,57 @@ func (as *ActivitiesServices) ExecutePayService(i *discordgo.InteractionCreate) 
 		return failOutput(err)
 	}
 	user.Pay()
-	err := repository.Save(aggregate)
+	err = as.repository.Save(aggregate)
 	if err != nil {
 		return failOutput(nil)
 	}
-	theMember := i.Member
-	nickname := theMember.User.Username
-	if theMember.Nick != "" {
-		nickname = theMember.Nick
-	}
-	title := fmt.Sprintf("%s pagou!!!", nickname)
-	description := phrases.RandomizePayPhrases(theMember.Mention())
+	title := fmt.Sprintf("%s pagou!!!", user.GetNickname())
+	description := helpers.RandomizePayPhrases(discordUsr.Member.Mention())
 	return successOutput(title, description)
 }
 
-func (as *ActivitiesServices) ExecuteRankingService() (*discordgo.InteractionResponseData, *discordgo.MessageEmbed) {
-
-	var irdata *discordgo.InteractionResponseData
-	var embed *discordgo.MessageEmbed
+func (as *ActivitiesServices) ExecuteRanking() *discordgo.InteractionResponseData {
 	var emojiIter string
 	var restIter string
-
 	emojis := [3]string{"🥇🏆", "🥈🏆", "🥉🏆"}
-	rank, err := repository.GetUsers()
+
+	rank, err := as.repository.GetUserRank()
 	if err != nil {
-		return failOutput(errors.New("Erro inesperado. Verifica essa parada ai !!")), nil
+		return failOutput(errors.New("Erro inesperado. Verifica essa parada ai !!"))
 	}
 
 	if len(rank) == 0 {
-		embed = &discordgo.MessageEmbed{
-			Title:       "O ranking ainda está vazio... 💭",
-			Description: "Os frangos ainda não submeteram treinos para o contador...",
-			Type:        discordgo.EmbedTypeArticle,
-			Color:       10,
-		}
-		irdata = &discordgo.InteractionResponseData{
-			Embeds: MsgEmbedType{embed},
-		}
+		title := "O ranking ainda está vazio... 💭"
+		description := "Os frangos ainda não submeteram treinos para o contador..."
+		return successOutput(title, description)
 	}
 
 	if len(rank) > 0 && len(rank) < 3 {
-		embed = &discordgo.MessageEmbed{
-			Title:       "Opa! Perai...",
-			Description: "É necessário pelo menos ter 3 pessoas pra montar um ranking...",
-			Type:        discordgo.EmbedTypeArticle,
-			Color:       10,
-		}
-		irdata = &discordgo.InteractionResponseData{
-			Embeds: MsgEmbedType{embed},
-		}
+		title := "Opa! Perai..."
+		description := "É necessário pelo menos ter 3 pessoas pra montar um ranking..."
+		return successOutput(title, description)
 	}
 
 	if len(rank) == 3 {
 		for i, v := range rank[:3] {
 			emojiIter += fmt.Sprintf("\nTOP %d %s - %d %s", i+1, v.Nickname, v.Count, emojis[i])
 		}
-		embed = &discordgo.MessageEmbed{
-			Title:       "Ranking dos mais saudáveis e marombeiros. 💪🏅",
-			Description: emojiIter,
-			Type:        discordgo.EmbedTypeArticle,
-			Color:       10,
-		}
-
-		irdata = &discordgo.InteractionResponseData{
-			Embeds: MsgEmbedType{embed},
-		}
+		title := "ranking dos mais saudáveis e marombeiros. 💪🏅"
+		description := emojiIter
+		return successOutput(title, description)
 	}
 
-	if len(rank) > 3 {
-		for i, v := range rank[:3] {
-			emojiIter += fmt.Sprintf("\nTOP %d %s - %d %s", i+1, v.Nickname, v.Count, emojis[i])
-		}
-
-		for i, v := range rank[3:] {
-			restIter += fmt.Sprintf("\nTOP %d %s - %d", i+4, v.Nickname, v.Count)
-		}
-
-		finalStr := emojiIter + restIter
-		embed = &discordgo.MessageEmbed{
-			Title:       "Ranking dos mais saudáveis e marombeiros. 💪🏅",
-			Description: finalStr,
-			Type:        discordgo.EmbedTypeArticle,
-			Color:       10,
-		}
-
-		irdata = &discordgo.InteractionResponseData{
-			Embeds: MsgEmbedType{embed},
-		}
+	for i, v := range rank[:3] {
+		emojiIter += fmt.Sprintf("\nTOP %d %s - %d %s", i+1, v.Nickname, v.Count, emojis[i])
 	}
-	return irdata, embed
+
+	for i, v := range rank[3:] {
+		restIter += fmt.Sprintf("\nTOP %d %s - %d", i+4, v.Nickname, v.Count)
+	}
+
+	finalStr := emojiIter + restIter
+	title := "ranking dos mais saudáveis e marombeiros. 💪🏅"
+	return successOutput(title, finalStr)
 }
 
 func (as *ActivitiesServices) ExecuteReset(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
@@ -159,13 +130,12 @@ func (as *ActivitiesServices) ExecuteReset(i *discordgo.InteractionCreate) *disc
 	modsId := strings.Split(env.Getenv("MODS_ID"), ",")
 	iamMod := slices.Contains(modsId, myDiscord.Id)
 	if !iamMod {
-		log.Default().Println(modsId)
 		log.Default().Println(fmt.Sprintf("O usuário %s tentou resetar a contagem sem permissão", myDiscord.Id))
 		title := "🤡🤡🤡🤡🤡🤡🤡"
 		description := "🐰 Alice, curiosa como sempre, seguiu um coelho branco até um buraco misterioso. O que poderia dar errado,Alice? 🐰"
 		return customFailOutput(title, description)
 	}
-	if err := repository.ResetCount(); err != nil {
+	if err := as.repository.ResetCount(); err != nil {
 		return failOutput(errors.New("Erro inesperado. Verifica essa parada ai mermão!!"))
 	}
 	fmtDescription := fmt.Sprintf("%s usou o comando para resetar as contagens dos frangos!", myDiscord.Nickname)
@@ -186,6 +156,8 @@ func (as *ActivitiesServices) HelpCmd() *discordgo.InteractionResponseData {
 	return successOutput(title, description)
 }
 
+// -> revise if this is the correct place to construct these outputs
+// only domain errors here (not db, userRepo, disc or sensitive errors)
 func failOutput(err error) *discordgo.InteractionResponseData {
 	description := "Ocorreu um erro inesperado. Não foi possível criar o usuário"
 	if err != nil {

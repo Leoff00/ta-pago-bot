@@ -2,6 +2,7 @@ package bot
 
 import (
 	"fmt"
+	"github.com/leoff00/ta-pago-bot/internal/services"
 	"log"
 	"os"
 	"os/signal"
@@ -9,18 +10,14 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leoff00/ta-pago-bot/pkg/env"
-	"github.com/leoff00/ta-pago-bot/pkg/helpers"
-	"github.com/robfig/cron/v3"
 )
 
 var (
 	botId string
-	c     = helpers.CronTasks{Cron: cron.New()}
 )
 
-func Start() {
+func Start(services *services.ActivitiesServices, ct *services.CronTasks) {
 	bot, err := discordgo.New(fmt.Sprintf("Bot %s", env.Getenv("TOKEN")))
-
 	if err != nil {
 		log.Default().Fatalln(`
 		Cannot initialize the session
@@ -28,18 +25,17 @@ func Start() {
 			err.Error())
 		return
 	}
-
+	bot.Identify.Intents = discordgo.IntentsAllWithoutPrivileged | discordgo.PermissionManageMessages
 	user, err := bot.User("@me")
 	if err != nil {
 		log.Default().Fatalln("Discord bot user not attached", err.Error())
 	}
 	botId = user.ID
 
-	ExecHandlers(bot)
-	c.ExecuteTasks(bot)
-	c.Cron.Start()
+	registerHandlers(bot, services)
 
-	bot.Identify.Intents = discordgo.IntentsAllWithoutPrivileged | discordgo.PermissionManageMessages
+	ct.ScheduleTasks(bot)
+	ct.Cron.Start()
 
 	DeleteCommands(botId)
 
@@ -58,5 +54,17 @@ func Start() {
 	signal.Notify(stsignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-stsignal
 
-	c.Cron.Stop()
+	ct.Cron.Stop()
+}
+
+func registerHandlers(bot *discordgo.Session, services *services.ActivitiesServices) {
+	ih := InteractionsHandlers{
+		services: services,
+	}
+	bot.AddHandlerOnce(OnReady())
+	bot.AddHandler(ih.join())
+	bot.AddHandler(ih.pay())
+	bot.AddHandler(ih.ranking())
+	bot.AddHandler(ih.reset())
+	bot.AddHandler(ih.help())
 }

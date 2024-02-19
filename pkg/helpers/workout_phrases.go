@@ -1,4 +1,4 @@
-package phrases
+package helpers
 
 import (
 	"fmt"

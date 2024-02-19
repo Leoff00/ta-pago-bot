@@ -10,7 +10,7 @@ var (
 	cmds = []*discordgo.ApplicationCommand{
 		{
 			Name:        "reset",
-			Description: "⚠️ Reset the db count (Mod exclusive only).⚠️",
+			Description: "⚠️ reset the db count (Mod exclusive only).⚠️",
 		},
 		{
 			Name:        "help",
@@ -18,7 +18,7 @@ var (
 		},
 		{
 			Name:        "inscrever",
-			Description: "Join in the TA PAGO! meeting and count!",
+			Description: "join in the TA PAGO! meeting and count!",
 		},
 		{
 			Name:        "ta-pago",

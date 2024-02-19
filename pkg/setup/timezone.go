@@ -5,11 +5,8 @@ import (
 	"time"
 )
 
-// example : "America/Sao_Paulo" -> -03
+// TimeZone example : America/Sao_Paulo -> TimeZone("-03")
 func TimeZone(expectedTimeZone string) {
-
-	// OS timezone
-	//location, _ := time.LoadLocation("Local")
 	current, _ := time.Now().Zone()
 	if current != expectedTimeZone {
 		log.Default().Fatalf("Current Timezone %s is not expected %s . Verify OS env 'TZ' or change 'TZ_BOT' value", current, expectedTimeZone)

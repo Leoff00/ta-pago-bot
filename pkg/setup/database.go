@@ -17,12 +17,12 @@ var (
 )
 
 func DB() *sql.DB {
-	db := setupDb(DB_PATH, DB_NAME, "DISCORD_USERS")
+	db := setupDb(DB_PATH, DB_NAME)
 	logSuccess()
 	return db
 }
 
-func setupDb(dbpath string, dbname string, tableName string) *sql.DB {
+func setupDb(dbpath string, dbname string) *sql.DB {
 	checkFile(dbpath, dbname)
 	db, err := sql.Open("sqlite3", fmt.Sprintf("%s/%s", dbpath, dbname))
 	if err != nil {
@@ -31,26 +31,24 @@ func setupDb(dbpath string, dbname string, tableName string) *sql.DB {
 	if err = db.Ping(); err != nil {
 		log.Default().Fatalln("Cannot ping the DB, maybe is offline. On DB Func ->", err.Error())
 	}
-	checkTableState(db, tableName)
+	checkTableState(db, "DISCORD_USERS")
 	db.SetMaxIdleConns(10)
 	db.SetMaxOpenConns(100)
-	db.SetConnMaxLifetime(time.Hour) // idk what happens when it expires
+	db.SetConnMaxLifetime(time.Hour)
 	return db
 }
 
 func checkFile(path string, dbname string) {
 	fullpath := fmt.Sprintf("%s/%s", path, dbname)
 	if _, err := os.Stat(fullpath); os.IsNotExist(err) {
-		log.Fatalln("DB file does not exist:", err)
+		log.Default().Fatalln("DB file does not exist:", err)
 	}
 	// Check file permissions
 	if info, err := os.Stat(fullpath); err == nil {
 		mode := info.Mode()
-		// Check if the file permissions are not equal to -rw-rw-rw-
 		expectedMode := os.FileMode(0666)
 		if mode != expectedMode {
-			log.Printf("File %s has incorrect permissions: %s", fullpath, mode)
-			log.Fatalln(fmt.Sprintf("Error: File %s has incorrect permissions", fullpath))
+			log.Fatalln(fmt.Sprintf("Error: File %s has incorrect permissions %s", fullpath, mode))
 		}
 	}
 }

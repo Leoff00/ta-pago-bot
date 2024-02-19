@@ -15,7 +15,7 @@ var (
 
 func Getenv(env string) string {
 	if !defaultsSet {
-		loadDefaults()
+		LoadDefaults()
 	}
 	if val := viper.GetString(env); val != "" {
 		return val
@@ -26,7 +26,7 @@ func Getenv(env string) string {
 	}
 	return osEnv
 }
-func loadDefaults() {
+func LoadDefaults() {
 	viper.SetDefault("DB_PATH", "./db")
 	viper.SetDefault("DB_NAME", "ta_pago.db")
 	viper.SetDefault("TZ_BOT", "-03") // default as "America/Sao_Paulo"
