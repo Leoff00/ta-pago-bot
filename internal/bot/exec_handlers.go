@@ -3,79 +3,69 @@ package bot
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leoff00/ta-pago-bot/internal/services"
-	"github.com/leoff00/ta-pago-bot/pkg/factory"
+	"github.com/leoff00/ta-pago-bot/pkg/discord"
 )
 
-var (
-	activities = services.ActivitiesServices{}
-)
+type InteractionsHandlers struct {
+	services *services.ActivitiesServices
+}
 
-func (ih *InteractionsHandlers) Join() InteractionCreateResponse {
+func (ih *InteractionsHandlers) join() InteractionCreateResponse {
 	return func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if i.Type == AppCmd {
 			switch i.ApplicationCommandData().Name {
 			case "inscrever":
-				joinResponse := activities.ExecuteJoinService(i)
-				factory.InteractionResponseFactory(joinResponse, s, i)
+				joinResponse := ih.services.ExecuteJoin(i)
+				discord.InteractionResponseFactory(joinResponse, s, i)
 			}
 		}
 	}
 }
 
-func (ih *InteractionsHandlers) Pay() InteractionCreateResponse {
+func (ih *InteractionsHandlers) pay() InteractionCreateResponse {
 	return func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if i.Type == AppCmd {
 			switch i.ApplicationCommandData().Name {
 			case "ta-pago":
-				payResponse := activities.ExecutePayService(i)
-				factory.InteractionResponseFactory(payResponse, s, i)
+				payResponse := ih.services.ExecutePay(i)
+				discord.InteractionResponseFactory(payResponse, s, i)
 			}
 		}
 	}
 }
 
-func (ih *InteractionsHandlers) Ranking() InteractionCreateResponse {
+func (ih *InteractionsHandlers) ranking() InteractionCreateResponse {
 	return func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if i.Type == AppCmd {
 			switch i.ApplicationCommandData().Name {
 			case "ranking":
-				rankingResponse, _ := activities.ExecuteRankingService()
-				factory.InteractionResponseFactory(rankingResponse, s, i)
+				rankingResponse := ih.services.ExecuteRanking()
+				discord.InteractionResponseFactory(rankingResponse, s, i)
 			}
 		}
 	}
 }
 
-func (ih *InteractionsHandlers) RestartCmd() InteractionCreateResponse {
+func (ih *InteractionsHandlers) reset() InteractionCreateResponse {
 	return func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if i.Type == AppCmd {
 			switch i.ApplicationCommandData().Name {
-			case "restart":
-				restartResponse := activities.RestartCmd(i)
-				factory.InteractionResponseFactory(restartResponse, s, i)
+			case "reset":
+				restartResponse := ih.services.ExecuteReset(i)
+				discord.InteractionResponseFactory(restartResponse, s, i)
 			}
 		}
 	}
 }
 
-func (ih *InteractionsHandlers) Help() InteractionCreateResponse {
+func (ih *InteractionsHandlers) help() InteractionCreateResponse {
 	return func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if i.Type == AppCmd {
 			switch i.ApplicationCommandData().Name {
 			case "help":
-				helpResponse := activities.HelpCmd()
-				factory.InteractionResponseFactory(helpResponse, s, i)
+				helpResponse := ih.services.HelpCmd()
+				discord.InteractionResponseFactory(helpResponse, s, i)
 			}
 		}
 	}
-}
-
-func ExecHandlers(bot *discordgo.Session) {
-	ih := InteractionsHandlers{}
-	bot.AddHandlerOnce(OnReady())
-	bot.AddHandler(ih.Join())
-	bot.AddHandler(ih.Pay())
-	bot.AddHandler(ih.Ranking())
-	bot.AddHandler(ih.RestartCmd())
-	bot.AddHandler(ih.Help())
 }

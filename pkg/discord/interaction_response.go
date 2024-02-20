@@ -1,4 +1,4 @@
-package factory
+package discord
 
 import (
 	"log"
@@ -13,5 +13,6 @@ func InteractionResponseFactory(data *discordgo.InteractionResponseData, s *disc
 	}); err != nil {
 		log.Default().Println(`
 		Error during execution of some handler ->`, err.Error())
+		// log the unknown handler
 	}
 }

@@ -2,226 +2,166 @@ package services
 
 import (
 	"fmt"
-	"log"
-
 	"github.com/bwmarrin/discordgo"
-
+	"github.com/leoff00/ta-pago-bot/internal/domain"
+	"github.com/leoff00/ta-pago-bot/internal/models"
 	"github.com/leoff00/ta-pago-bot/internal/repo"
-	"github.com/leoff00/ta-pago-bot/pkg/factory"
-	"github.com/leoff00/ta-pago-bot/pkg/strings"
+	"github.com/leoff00/ta-pago-bot/pkg/discord"
+	"github.com/leoff00/ta-pago-bot/pkg/env"
+	"github.com/leoff00/ta-pago-bot/pkg/helpers"
+	"log"
+	"slices"
+	"strings"
 )
 
-var dur = repo.DiscordUserRepository{}
+type ActivitiesServices struct {
+	repository *repo.UserRepository
+}
 
-func (as *ActivitiesServices) ExecuteJoinService(
-	i *discordgo.InteractionCreate,
-) *discordgo.InteractionResponseData {
-	du := factory.GetUserData(i)
-	if err := dur.Save(du); err != nil {
-		fmtDescription := fmt.Sprintf(
-			"Parece que o canela seca do <@%s> ta tentando me derrubar, TU JA TA INSCRITO SUA MULA!! ",
-			du.Id,
-		)
-		return &discordgo.InteractionResponseData{
-			Embeds: MsgEmbedType{
-				&discordgo.MessageEmbed{
-					Title:       "Deu merda aqui!!",
-					Description: fmtDescription,
-					Type:        discordgo.EmbedTypeRich,
-					Color:       10,
-				},
-			},
-		}
-	}
-
-	fmtDescription := strings.RandomizeJoinPhrases(du.Id)
-
-	return &discordgo.InteractionResponseData{
-		Embeds: MsgEmbedType{
-			&discordgo.MessageEmbed{
-				Title:       "Agora é só mandar bala, digite o comando /ta-pago toda vez que buscar o shape meu nobre!! 💪🏅",
-				Description: fmtDescription,
-				Type:        discordgo.EmbedTypeRich,
-				Color:       10,
-			},
-		},
+func NewActivitiesServices(repository *repo.UserRepository) *ActivitiesServices {
+	return &ActivitiesServices{
+		repository: repository,
 	}
 }
 
-func (as *ActivitiesServices) ExecutePayService(
-	i *discordgo.InteractionCreate,
-) *discordgo.InteractionResponseData {
-	du := factory.GetUserData(i)
-	if err := dur.IncrementCount(du.Id); err != nil {
-		return &discordgo.InteractionResponseData{
-			Embeds: MsgEmbedType{
-				&discordgo.MessageEmbed{
-					Title:       "Deu merda aqui!",
-					Description: fmt.Sprintln(err.Error() + "❌"),
-					Type:        discordgo.EmbedTypeRich,
-					Color:       10,
-				},
-			},
-		}
+func (as *ActivitiesServices) ExecuteJoin(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
+	discordUser := discord.GetUserData(i)
+	isSubscribed, err := as.repository.ExistsById(discordUser.Id)
+	if err != nil {
+		return failUnexpectedOutput()
 	}
-
-	fmtTitle := fmt.Sprintf("<@%s> pagou!!!", du.Id)
-	fmtDescription := strings.RandomizePayPhrases(du.Id)
-
-	return &discordgo.InteractionResponseData{
-		Embeds: MsgEmbedType{
-			&discordgo.MessageEmbed{
-				Title:       fmtTitle,
-				Description: fmtDescription,
-				Type:        discordgo.EmbedTypeRich,
-				Color:       10,
-			},
-		},
+	if isSubscribed {
+		d := fmt.Sprintf(
+			"Parece que o canela seca do %s ta tentando me derrubar, TU JA TA INSCRITO SUA MULA!!",
+			discordUser.Member.Mention())
+		return failOutput(OutOpt{
+			Description: d,
+		})
 	}
+	user, err := domain.NewUser(domain.CreateUserOpts{
+		Id:       discordUser.Id,
+		Username: discordUser.Username,
+		Nickname: discordUser.Nickname,
+	})
+	if err != nil {
+		log.Default().Println("Error during user creation", err.Error())
+		return failUnexpectedOutput()
+	}
+	if err = as.repository.Insert(user); err != nil {
+		return failUnexpectedOutput()
+	}
+	return successOutput(OutOpt{
+		Title:       "Agora é só mandar bala, digite o comando /ta-pago toda vez que buscar o shape meu nobre!! 💪🏅",
+		Description: helpers.RandomizeJoinPhrases(discordUser.Member.Mention()),
+	})
 }
 
-func (as *ActivitiesServices) ExecuteRankingService() (*discordgo.InteractionResponseData, *discordgo.MessageEmbed) {
-	var irdata *discordgo.InteractionResponseData
-	var embed *discordgo.MessageEmbed
+func (as *ActivitiesServices) ExecutePay(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
+	discordUsr := discord.GetUserData(i)
+	user, err := as.repository.GetUserById(i.Member.User.ID)
+	if err != nil {
+		return failUnexpectedOutput()
+	}
+	aggregate := &models.UserAggregate{
+		User:        user,
+		DiscordUser: discordUsr,
+	}
+	if user.IsNotSubscribed() {
+		return failOutput(OutOpt{
+			Description: "você precisa antes se inscrever na lista fera"})
+	}
+	if user.AlreadySubmitted() {
+		return failOutput(OutOpt{
+			Description: "seu frango! tu já treinou hoje mermão, volta amanhã"})
+	}
+	user.Pay()
+	err = as.repository.Save(aggregate)
+	if err != nil {
+		return failUnexpectedOutput()
+	}
+	return successOutput(OutOpt{
+		Title:       fmt.Sprintf("%s pagou!!!", user.GetNickname()),
+		Description: helpers.RandomizePayPhrases(discordUsr.Member.Mention()),
+	})
+}
+
+func (as *ActivitiesServices) ExecuteRanking() *discordgo.InteractionResponseData {
 	var emojiIter string
 	var restIter string
-
 	emojis := [3]string{"🥇🏆", "🥈🏆", "🥉🏆"}
-	rank := dur.GetUsers()
+
+	rank, err := as.repository.GetUsersRank()
+	if err != nil {
+		return failUnexpectedOutput()
+	}
 
 	if len(rank) == 0 {
-		embed = &discordgo.MessageEmbed{
+		return successOutput(OutOpt{
 			Title:       "O ranking ainda está vazio... 💭",
 			Description: "Os frangos ainda não submeteram treinos para o contador...",
-			Type:        discordgo.EmbedTypeArticle,
-			Color:       10,
-		}
-		irdata = &discordgo.InteractionResponseData{
-			Embeds: MsgEmbedType{embed},
-		}
+		})
 	}
 
 	if len(rank) > 0 && len(rank) < 3 {
-		embed = &discordgo.MessageEmbed{
+		return successOutput(OutOpt{
 			Title:       "Opa! Perai...",
 			Description: "É necessário pelo menos ter 3 pessoas pra montar um ranking...",
-			Type:        discordgo.EmbedTypeArticle,
-			Color:       10,
-		}
-		irdata = &discordgo.InteractionResponseData{
-			Embeds: MsgEmbedType{embed},
-		}
+		})
 	}
 
 	if len(rank) == 3 {
 		for i, v := range rank[:3] {
-			emojiIter += fmt.Sprintf("\nTOP %d %s - %d %s", i+1, v.Username, v.Count, emojis[i])
+			emojiIter += fmt.Sprintf("\nTOP %d %s - %d %s", i+1, v.Nickname, v.Count, emojis[i])
 		}
-		embed = &discordgo.MessageEmbed{
-			Title:       "Ranking dos mais saudáveis e marombeiros. 💪🏅",
+		return successOutput(OutOpt{
+			Title:       "ranking dos mais saudáveis e marombeiros. 💪🏅",
 			Description: emojiIter,
-			Type:        discordgo.EmbedTypeArticle,
-			Color:       10,
-		}
-
-		irdata = &discordgo.InteractionResponseData{
-			Embeds: MsgEmbedType{embed},
-		}
+		})
 	}
 
-	if len(rank) > 3 {
-		for i, v := range rank[:3] {
-			emojiIter += fmt.Sprintf("\nTOP %d %s - %d %s", i+1, v.Username, v.Count, emojis[i])
-		}
-
-		for i, v := range rank[3:] {
-			restIter += fmt.Sprintf("\nTOP %d %s - %d", i+4, v.Username, v.Count)
-		}
-
-		finalStr := emojiIter + restIter
-		embed = &discordgo.MessageEmbed{
-			Title:       "Ranking dos mais saudáveis e marombeiros. 💪🏅",
-			Description: finalStr,
-			Type:        discordgo.EmbedTypeArticle,
-			Color:       10,
-		}
-
-		irdata = &discordgo.InteractionResponseData{
-			Embeds: MsgEmbedType{embed},
-		}
+	for i, v := range rank[:3] {
+		emojiIter += fmt.Sprintf("\nTOP %d %s - %d %s", i+1, v.Nickname, v.Count, emojis[i])
 	}
-	return irdata, embed
+	for i, v := range rank[3:] {
+		restIter += fmt.Sprintf("\nTOP %d %s - %d", i+4, v.Nickname, v.Count)
+	}
+	return successOutput(OutOpt{
+		Title:       "Ranking dos mais saudáveis e marombeiros. 💪🏅",
+		Description: emojiIter + restIter,
+	})
 }
 
-func (as *ActivitiesServices) RestartCount() *discordgo.InteractionResponseData {
-	if err := dur.RestartCount(); err != nil {
-		log.Default().Println("Cannot restart the the count in database On Service", err.Error())
+func (as *ActivitiesServices) ExecuteReset(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
+	myDiscord := discord.GetUserData(i)
+	modsId := strings.Split(env.Getenv("MODS_ID"), ",")
+	iamMod := slices.Contains(modsId, myDiscord.Id)
+	if !iamMod {
+		return failOutput(OutOpt{
+			Title:       "🤡🤡🤡🤡🤡🤡🤡",
+			Description: "🐰 Alice, curiosa como sempre, seguiu um coelho branco até um buraco misterioso. O que poderia dar errado,Alice? 🐰",
+		})
 	}
-
-	return &discordgo.InteractionResponseData{
-		Embeds: MsgEmbedType{
-			&discordgo.MessageEmbed{
-				Title:       "Veja abaixo como os comandos funcionam.",
-				Description: "fmtDescription",
-				Type:        discordgo.EmbedTypeRich,
-				Color:       10,
-			},
-		},
+	if err := as.repository.ResetCount(); err != nil {
+		return failUnexpectedOutput()
 	}
-}
-
-func (as *ActivitiesServices) RestartCmd(
-	i *discordgo.InteractionCreate,
-) *discordgo.InteractionResponseData {
-	du := factory.GetUserData(i)
-	fmtDescription := fmt.Sprintf(
-		"<@%s> usou o comando para resetar as contagens dos frangos!",
-		du.Id,
-	)
-	if err := dur.ModrestartCount(du.Id); err != nil {
-		return &discordgo.InteractionResponseData{
-			Embeds: MsgEmbedType{
-				&discordgo.MessageEmbed{
-					Title:       "Deu merda aqui!!!",
-					Description: "O comando só pode ser executado por mods mermão!!",
-					Type:        discordgo.EmbedTypeRich,
-					Color:       10,
-				},
-			},
-		}
-	}
-
-	return &discordgo.InteractionResponseData{
-		Embeds: MsgEmbedType{
-			&discordgo.MessageEmbed{
-				Title:       "TABELA RESETADA!!!",
-				Description: fmtDescription,
-				Type:        discordgo.EmbedTypeRich,
-				Color:       10,
-			},
-		},
-	}
+	return successOutput(OutOpt{
+		Title:       "Contagem resetada com sucesso!",
+		Description: fmt.Sprintf("%s usou o comando para resetar as contagens dos frangos!", myDiscord.Nickname),
+	})
 }
 
 func (as *ActivitiesServices) HelpCmd() *discordgo.InteractionResponseData {
-	fmtDescription := fmt.Sprintln(`
+	description := fmt.Sprintln(`
 		/inscrever: Este comando te incluirá na lista de contagem de treinos o autor do comando. ✅ 
 
 		/ta-pago: Este comando validara a contagem de treino do autor do comando, aumentando sua posição no ranking. 💪
 	
 		/ranking: Use este comando para visualizar a lista atualizada dos **10 Primeiros** participantes. 🏆🏅
 
-		/restart: Este comando é utilizado pelos administradores do servidor para resetar a contagem de treinos caso algo dê problema. 🫡💪
+		/reset: Este comando é utilizado pelos administradores do servidor para resetar a contagem de treinos caso algo dê problema. 🫡💪
 		`)
-
-	return &discordgo.InteractionResponseData{
-		Embeds: MsgEmbedType{
-			&discordgo.MessageEmbed{
-				Title:       "Veja abaixo como os comandos funcionam.",
-				Description: fmtDescription,
-				Type:        discordgo.EmbedTypeRich,
-				Color:       10,
-			},
-		},
-	}
+	return successOutput(OutOpt{
+		Title:       "Veja abaixo como os comandos funcionam.",
+		Description: description,
+	})
 }

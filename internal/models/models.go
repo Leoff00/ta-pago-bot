@@ -1,13 +1,16 @@
 package models
 
-type DiscordUser struct {
-	Id         string `json:"id"`
-	Username   string `json:"username"`
-	Count      int    `json:"count"`
-	Updated_at int    `json:"updated_at"`
+import (
+	"github.com/leoff00/ta-pago-bot/internal/domain"
+	"github.com/leoff00/ta-pago-bot/pkg/discord"
+)
+
+type DiscordRankType struct {
+	Nickname string `json:"nickname"`
+	Count    int    `json:"count"`
 }
 
-type DiscordReturnType struct {
-	Username string `json:"username"`
-	Count    int    `json:"count"`
+type UserAggregate struct {
+	User        *domain.User
+	DiscordUser *discord.UserData
 }

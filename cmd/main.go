@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
-
 	"github.com/leoff00/ta-pago-bot/internal/bot"
-	"github.com/leoff00/ta-pago-bot/internal/db"
+	"github.com/leoff00/ta-pago-bot/internal/repo"
+	"github.com/leoff00/ta-pago-bot/internal/services"
+	"github.com/leoff00/ta-pago-bot/pkg/env"
+	"github.com/leoff00/ta-pago-bot/pkg/setup"
 )
 
 const displayArt = "\033[36m" + ` 
@@ -21,8 +23,15 @@ $$$$$$$$\  $$$$$$\        $$$$$$$\   $$$$$$\   $$$$$$\   $$$$$$\  $$\
 ` + "\033[0m"
 
 func main() {
-	fmt.Println(displayArt)
-	db.Setup()
+	setup.Envs()
+	setup.Pwd()
+	setup.TimeZone(env.Getenv("TZ_BOT"))
+	db := setup.DB()
+	
+	repository := repo.NewUserRepository(db)
+	service := services.NewActivitiesServices(repository)
+	cron := services.NewCronService(repository, service)
 
-	bot.Start()
+	fmt.Println(displayArt)
+	bot.Start(service, cron)
 }

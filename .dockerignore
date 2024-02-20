@@ -2,3 +2,6 @@
 .git
 .github
 .env.example
+*.db
+*.sqlite
+*seed*sql
