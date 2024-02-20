@@ -19,7 +19,8 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 	}
 }
 
-func (ur *UserRepository) GetUserRank() ([]models.DiscordRankType, error) {
+// GetUsersRank gets the top 10 users from the database
+func (ur *UserRepository) GetUsersRank() ([]models.DiscordRankType, error) {
 	var rankList []models.DiscordRankType
 	rows, err := ur.db.Query(`SELECT username, nickname, count
 										  FROM DISCORD_USERS
@@ -49,7 +50,8 @@ func (ur *UserRepository) GetUserRank() ([]models.DiscordRankType, error) {
 	return rankList, nil
 }
 
-func (ur *UserRepository) Create(user *domain.User) error {
+// Insert create a new user into the database
+func (ur *UserRepository) Insert(user *domain.User) error {
 	rows, err := ur.db.Exec(`
 								INSERT INTO DISCORD_USERS (id, username, updated_at, count, nickname)
 								VALUES (?, ?, ?, ?, ?)`, user.Id, user.Username, 0, user.Count, user.Nickname)
@@ -62,10 +64,11 @@ func (ur *UserRepository) Create(user *domain.User) error {
 		log.Default().Println("Cannot get the affected row line numbers on Repo.", err.Error())
 		return err
 	}
-	log.Default().Println("Rows affected on Create User ->", affected)
+	log.Default().Println("Rows affected on Insert User ->", affected)
 	return err
 }
 
+// GetUserById gets specific hydrated user entity from the database
 func (ur *UserRepository) GetUserById(discordId string) (*domain.User, error) {
 	var du domain.User
 	row := ur.db.QueryRow(`SELECT id, username, updated_at, count, nickname
@@ -78,6 +81,7 @@ func (ur *UserRepository) GetUserById(discordId string) (*domain.User, error) {
 	return &du, nil
 }
 
+// Save updates/persist existent user on the database
 func (ur *UserRepository) Save(aggregate *models.UserAggregate) error {
 	user := aggregate.User
 	normalize(user, aggregate.DiscordUser)

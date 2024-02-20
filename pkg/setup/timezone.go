@@ -6,6 +6,7 @@ import (
 )
 
 // TimeZone example : America/Sao_Paulo -> TimeZone("-03")
+// Check for misconfiguration with Timezone
 func TimeZone(expectedTimeZone string) {
 	current, _ := time.Now().Zone()
 	if current != expectedTimeZone {

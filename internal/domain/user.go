@@ -18,6 +18,11 @@ type CreateUserOpts struct {
 	Nickname string
 }
 
+/*
+	NewUser instances an NONEXISTENT user
+
+this constructor should not be used inside repository. instead use the User struct directly
+*/
 func NewUser(opts CreateUserOpts) (*User, error) {
 	user := &User{
 		Id:       opts.Id,

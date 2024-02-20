@@ -9,7 +9,8 @@ type UserData struct {
 	Member   *discordgo.Member
 }
 
-// put here all necessary data that comes from discord api independently of domain
+// GetUserData retrieve the Discord Api user data from the interaction
+// Put here any data that comes from discord
 func GetUserData(i *discordgo.InteractionCreate) *UserData {
 	discordUser := &UserData{
 		Id:       i.Member.User.ID,

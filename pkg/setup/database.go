@@ -16,6 +16,7 @@ var (
 	DB_NAME = env.Getenv("DB_NAME")
 )
 
+// DB setup the database connection and do checks
 func DB() *sql.DB {
 	db := setupDb(DB_PATH, DB_NAME)
 	logSuccess()

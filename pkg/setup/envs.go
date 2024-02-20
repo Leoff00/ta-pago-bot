@@ -5,6 +5,7 @@ import (
 	"log"
 )
 
+// Envs checks if the expected environment variables are set
 func Envs() {
 	if token := env.Getenv("TOKEN"); token == "" {
 		log.Default().Fatalln("Environment variable 'TOKEN' not set")
