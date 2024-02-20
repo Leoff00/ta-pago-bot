@@ -7,25 +7,19 @@ import (
 	"os"
 	"time"
 
-	"github.com/leoff00/ta-pago-bot/pkg/env"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var (
-	DB_PATH = env.Getenv("DB_PATH")
-	DB_NAME = env.Getenv("DB_NAME")
-)
-
 // DB setup the database connection and do checks
-func DB() *sql.DB {
-	db := setupDb(DB_PATH, DB_NAME)
-	logSuccess()
+func DB(dbname string) *sql.DB {
+	db := setupDb(dbname)
+	logSuccess(dbname)
 	return db
 }
 
-func setupDb(dbpath string, dbname string) *sql.DB {
-	checkFile(dbpath, dbname)
-	db, err := sql.Open("sqlite3", fmt.Sprintf("%s/%s", dbpath, dbname))
+func setupDb(dbname string) *sql.DB {
+	checkFile(dbname)
+	db, err := sql.Open("sqlite3", fmt.Sprintf("./db/%s", dbname))
 	if err != nil {
 		log.Default().Fatalln("Cannot open the DB. On DB Func ->", err.Error())
 	}
@@ -39,8 +33,8 @@ func setupDb(dbpath string, dbname string) *sql.DB {
 	return db
 }
 
-func checkFile(path string, dbname string) {
-	fullpath := fmt.Sprintf("%s/%s", path, dbname)
+func checkFile(dbname string) {
+	fullpath := fmt.Sprintf("./db/%s", dbname)
 	if _, err := os.Stat(fullpath); os.IsNotExist(err) {
 		log.Default().Fatalln("DB file does not exist:", err)
 	}
@@ -67,8 +61,8 @@ func checkTableState(db *sql.DB, tableName string) {
 	}
 }
 
-func logSuccess() {
+func logSuccess(dbname string) {
 	log.Default().Printf("DB Current tables state is ok.")
 	log.Default().Printf("DB Current permission state is ok.")
-	log.Default().Printf("Connect estabilished with DB: %s/%s", DB_PATH, DB_NAME)
+	log.Default().Printf("Connect estabilished with DB: ./db/%s", dbname)
 }

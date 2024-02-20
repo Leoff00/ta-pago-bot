@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/leoff00/ta-pago-bot/internal/bot"
-	"github.com/leoff00/ta-pago-bot/internal/repo"
 	"github.com/leoff00/ta-pago-bot/internal/services"
 	"github.com/leoff00/ta-pago-bot/pkg/env"
 	"github.com/leoff00/ta-pago-bot/pkg/setup"
@@ -26,11 +25,9 @@ func main() {
 	setup.Envs()
 	setup.Pwd()
 	setup.TimeZone(env.Getenv("TZ_BOT"))
-	db := setup.DB()
-	
-	repository := repo.NewUserRepository(db)
-	service := services.NewActivitiesServices(repository)
-	cron := services.NewCronService(repository, service)
+	tenantCfg := setup.Tenants()
+	service := setup.Service(tenantCfg)
+	cron := services.NewCronService(service)
 
 	fmt.Println(displayArt)
 	bot.Start(service, cron)
