@@ -10,7 +10,7 @@ func RandomizeJoinPhrases(user string) string {
 	join_phrases := [10]string{
 		fmt.Sprintf("%s está prestes a abandonar a vida sedentária! Quando digitar /inscrever, é hora de mostrar que é mais do que um frango!", user),
 		fmt.Sprintf("Prepara-se para o show de músculos! %s está a um passo de entrar na batalha contra a mediocridade quando digitar /inscrever!", user),
-		fmt.Sprintf("%s> está pronto para sair da toca e virar o rei da selva! É só digitar /inscrever e assumir o controle!", user),
+		fmt.Sprintf("%s está pronto para sair da toca e virar o rei da selva! É só digitar /inscrever e assumir o controle!", user),
 		fmt.Sprintf("Quem está pronto para deixar de ser um patinho feio? %s, é só digitar /inscrever e transformar-se em um cisne!", user),
 		fmt.Sprintf("Prepare-se para a metamorfose! %s vai sair do casulo e virar uma borboleta musculosa quando digitar /inscrever!", user),
 		fmt.Sprintf("%s está prestes a se tornar uma lenda da academia! Quando digitar /inscrever, o mundo vai saber que nasceu uma nova estrela!", user),

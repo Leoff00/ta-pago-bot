@@ -19,9 +19,6 @@ var (
 Searches .env file first, then OS Envs, then defaults envs
 */
 func Getenv(env string) string {
-	if !defaultsSet {
-		loadDefaults()
-	}
 	if val := viper.GetString(env); val != "" {
 		return val
 	}
@@ -31,11 +28,15 @@ func Getenv(env string) string {
 	}
 	return osEnv
 }
-func loadDefaults() {
-	viper.SetDefault("TZ_BOT", "-03") // default as "America/Sao_Paulo"
-	viper.SetConfigFile(".env")
-	if err := viper.ReadInConfig(); err != nil {
-		log.Default().Printf("Not .env file found : %v\n", err)
+func Load(defaults map[string]string, envFiles ...string) {
+	for k, v := range defaults {
+		viper.SetDefault(k, v)
+	}
+	for _, env := range envFiles {
+		viper.SetConfigFile(env)
+		if err := viper.ReadInConfig(); err != nil {
+			log.Default().Printf("ENV WARN: Can't load %s file.", env)
+		}
 	}
 	defaultsSet = true
 	logEnvs()
@@ -46,7 +47,8 @@ func logEnvs() {
 	concatenateDefaultsToString := ""
 	for k, v := range defaults {
 		k = strings.ToUpper(k)
-		if k == "TOKEN" {
+		prefixToHide := "SENSITIVE_"
+		if strings.HasPrefix(k, prefixToHide) {
 			concatenateDefaultsToString += fmt.Sprintf("%s: %s | ", k, "**********")
 			continue
 		}

@@ -2,7 +2,7 @@ package setup
 
 import (
 	"encoding/json"
-	"github.com/leoff00/ta-pago-bot/internal/tenants"
+	"github.com/leoff00/ta-pago-bot/internal/models/tenants"
 	"log"
 	"os"
 )

@@ -1,18 +1,20 @@
 package setup
 
 import (
+	"github.com/leoff00/ta-pago-bot/internal/models/tenants"
 	"github.com/leoff00/ta-pago-bot/internal/repo"
 	"github.com/leoff00/ta-pago-bot/internal/services"
-	"github.com/leoff00/ta-pago-bot/internal/tenants"
+	"github.com/leoff00/ta-pago-bot/pkg/database"
 	"log"
 )
 
-func Service(tenantsCfg []tenants.Tenant) *services.ActivitiesServices {
-
-	// Create a map with server_id as key
+func Service(tenantsCfg []tenants.Tenant, env string) *services.ActivitiesServices {
+	tablesToCheck := []string{"DISCORD_USERS"}
 	tenantsMap := make(map[string]*tenants.Tenant)
-	for _, config := range tenantsCfg { //db connect
-		db := DB(config.DBName)
+
+	// Create a map with server_id as key -> tenant as value
+	for _, config := range tenantsCfg {
+		db := database.SetupSqlite(config.DBName, tablesToCheck, env)
 		repository := repo.NewUserRepository(db)
 		config.Repository = repository
 		currentConfig := config

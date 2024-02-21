@@ -4,15 +4,13 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/leoff00/ta-pago-bot/internal/domain"
+	"github.com/leoff00/ta-pago-bot/internal/helpers"
 	"github.com/leoff00/ta-pago-bot/internal/models"
+	"github.com/leoff00/ta-pago-bot/internal/models/tenants"
 	"github.com/leoff00/ta-pago-bot/internal/repo"
-	"github.com/leoff00/ta-pago-bot/internal/tenants"
 	"github.com/leoff00/ta-pago-bot/pkg/discord"
-	"github.com/leoff00/ta-pago-bot/pkg/env"
-	"github.com/leoff00/ta-pago-bot/pkg/helpers"
 	"log"
 	"slices"
-	"strings"
 )
 
 // ActivitiesServices is a struct that holds configs & repository from a tenant
@@ -95,7 +93,7 @@ func (as *ActivitiesServices) ExecuteRanking(i *discordgo.InteractionCreate, ser
 	var emojiIter string
 	var restIter string
 	emojis := [3]string{"🥇🏆", "🥈🏆", "🥉🏆"}
-	
+
 	if serverId == "" {
 		serverId = discord.GetUserData(i).ServerId
 	}
@@ -144,7 +142,7 @@ func (as *ActivitiesServices) ExecuteRanking(i *discordgo.InteractionCreate, ser
 
 func (as *ActivitiesServices) ExecuteReset(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
 	discordUsr := discord.GetUserData(i)
-	modsId := strings.Split(env.Getenv("MODS_ID"), ",")
+	modsId := as.tenants[discordUsr.ServerId].ModsID
 	iamMod := slices.Contains(modsId, discordUsr.Id)
 	if !iamMod {
 		return failOutput(OutOpt{
