@@ -3,6 +3,7 @@ package repo
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"github.com/leoff00/ta-pago-bot/internal/domain"
 	"github.com/leoff00/ta-pago-bot/internal/models"
 	"github.com/leoff00/ta-pago-bot/pkg/discord"
@@ -74,6 +75,9 @@ func (ur *UserRepository) GetUserById(discordId string) (*domain.User, error) {
 	row := ur.db.QueryRow(`SELECT id, username, updated_at, count, nickname
 											FROM DISCORD_USERS WHERE id = ?`, discordId)
 	err := row.Scan(&du.Id, &du.Username, &du.Updated_at, &du.Count, &du.Nickname)
+	if errors.Is(err, sql.ErrNoRows) { //expected error
+		return &du, nil
+	}
 	if err != nil {
 		log.Default().Println("Cannot get the user from DB on Repo.", err.Error())
 		return nil, err

@@ -17,7 +17,7 @@ var (
 )
 
 func Start(services *services.ActivitiesServices, ct *services.CronTasks) {
-	bot, err := discordgo.New(fmt.Sprintf("Bot %s", env.Getenv("TOKEN")))
+	bot, err := discordgo.New(fmt.Sprintf("Bot %s", env.Getenv("SENSITIVE_TOKEN")))
 	if err != nil {
 		log.Default().Fatalln(`
 		Cannot initialize the session

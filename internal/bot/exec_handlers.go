@@ -39,7 +39,7 @@ func (ih *InteractionsHandlers) ranking() InteractionCreateResponse {
 		if i.Type == AppCmd {
 			switch i.ApplicationCommandData().Name {
 			case "ranking":
-				rankingResponse := ih.services.ExecuteRanking()
+				rankingResponse := ih.services.ExecuteRanking(i, "")
 				discord.InteractionResponseFactory(rankingResponse, s, i)
 			}
 		}

@@ -1,0 +1,17 @@
+[
+  {
+    "server_name" : "servidor1",
+    "server_id": "1200543775643156523",
+    "channel_id": "1200543776884654092",
+    "mods_id": ["123", "456"],
+    "db_name": "server1.db"
+  },
+  {
+    "server_name" : "servidor2",
+    "server_id": "1209391907042500649",
+    "channel_id": "1209391907730358305",
+    "mods_id": ["321", "5231"],
+    "db_name": "server2.db"
+  }
+]
+

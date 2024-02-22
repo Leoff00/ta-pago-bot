@@ -9,7 +9,7 @@ RUN go mod download && go mod verify
 # Copy everything from PWD build to /app container
 COPY . .
 # Remove unwanted acidentally files
-RUN find . -type f \( -name '*.db' -o -name '*.sqlite' -o -name '*.sqlite3' -o -name '*.sql' -o -name '*.env' -o -name 'ta_pago_bot' \) -delete
+RUN find . -type f \( -name '*.db' -o -name '*.sqlite' -o -name '*.sqlite3' -o -name '*.sql' -o -name '*.env' -o -name 'ta_pago_bot' -o name 'tenant.json' \) -delete
 # Remove db directory if it exists
 RUN if [ -d "/app/db" ]; then rm -rf /app/db; fi
 # Create directories for database migrations

@@ -1,25 +1,19 @@
 #!/bin/bash
 
-## THIS SCRIPT SETUPS THE MACHINE DEPLOY ENVIRONMENT FOR THE PROJECT (NOT DOCKER CONTAINER)
-## FUNCTIONS ---------------------------
-function is_database_empty {
-    tables=$(sqlite3 ./db/ta_pago.db ".tables")
-    if [ -z "$tables" ]; then
-        return 0 # Database is empty
-    else
-        return 1 # Database is not empty
-    fi
-}
+## THIS SCRIPT SETUPS THE MACHINE DEPLOY ENVIRONMENT FOR THE PROJECT (WARN: THIS IS NOT INTEND TO BE RUN INSIDE DOCKER CONTAINER)
+## THIS IS A IDEMPOTENT SCRIPT, CAN BE RUN MULTIPLE TIMES WITHOUT ANY SIDE EFFECTS
 
-# Function to check if seed files exist
-function seed_files_exist {
-    if [ -f ./db/seed.sql ] || [ -f ./db/seed_update.sql ]; then
-        return 0 # Seed files exist
-    else
-        return 1 # Seed files do not exist
-    fi
-}
-## END FUNCTIONS -------------------------
+# Check for docker
+if command -v docker &> /dev/null; then
+    echo "Docker is installed."
+else
+    echo "Docker is not installed. Installing..."
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sudo sh get-docker.sh
+    sudo groupadd docker
+    sudo usermod -aG docker $USER
+    echo "Docker is installed."
+fi
 
 # Check if Go is installed  (necessary to run migrate)
 if command -v go &> /dev/null; then
@@ -57,22 +51,6 @@ else
     sudo apt update
     sudo apt install -y sqlite3 libsqlite3-dev
     go install -tags 'sqlite3' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-fi
-
-# do migrations
-sqlite3 ./db/ta_pago.db ""
-chmod 666 ./db/ta_pago.db
-make migration_exec
-
-# Check if the database is empty to seed
-if is_database_empty; then
-    echo "Database is empty. running seeds..."
-    # Seed the database
-    echo "Seeding the database..."
-    sqlite3 ./db/ta_pago.db < ./db/seed.sql
-    sqlite3 ./db/ta_pago.db < ./db/seed_update.sql
-else
-    echo "Database is not empty. Skipping migrations and seeds."
 fi
 
 

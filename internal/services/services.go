@@ -4,36 +4,38 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/leoff00/ta-pago-bot/internal/domain"
+	"github.com/leoff00/ta-pago-bot/internal/helpers"
 	"github.com/leoff00/ta-pago-bot/internal/models"
+	"github.com/leoff00/ta-pago-bot/internal/models/tenants"
 	"github.com/leoff00/ta-pago-bot/internal/repo"
 	"github.com/leoff00/ta-pago-bot/pkg/discord"
-	"github.com/leoff00/ta-pago-bot/pkg/env"
-	"github.com/leoff00/ta-pago-bot/pkg/helpers"
 	"log"
 	"slices"
-	"strings"
 )
 
+// ActivitiesServices is a struct that holds configs & repository from a tenant
 type ActivitiesServices struct {
-	repository *repo.UserRepository
+	tenants map[string]*tenants.Tenant
 }
 
-func NewActivitiesServices(repository *repo.UserRepository) *ActivitiesServices {
+func NewActivitiesServices(tenants map[string]*tenants.Tenant) *ActivitiesServices {
 	return &ActivitiesServices{
-		repository: repository,
+		tenants: tenants,
 	}
 }
 
 func (as *ActivitiesServices) ExecuteJoin(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
 	discordUser := discord.GetUserData(i)
-	isSubscribed, err := as.repository.ExistsById(discordUser.Id)
+	repository := as.GetRepository(discordUser.ServerId)
+
+	isSubscribed, err := repository.ExistsById(discordUser.Id)
 	if err != nil {
 		return failUnexpectedOutput()
 	}
 	if isSubscribed {
 		d := fmt.Sprintf(
 			"Parece que o canela seca do %s ta tentando me derrubar, TU JA TA INSCRITO SUA MULA!!",
-			discordUser.Member.Mention())
+			discordUser.Mention)
 		return failOutput(OutOpt{
 			Description: d,
 		})
@@ -47,18 +49,20 @@ func (as *ActivitiesServices) ExecuteJoin(i *discordgo.InteractionCreate) *disco
 		log.Default().Println("Error during user creation", err.Error())
 		return failUnexpectedOutput()
 	}
-	if err = as.repository.Insert(user); err != nil {
+	if err = repository.Insert(user); err != nil {
 		return failUnexpectedOutput()
 	}
 	return successOutput(OutOpt{
 		Title:       "Agora é só mandar bala, digite o comando /ta-pago toda vez que buscar o shape meu nobre!! 💪🏅",
-		Description: helpers.RandomizeJoinPhrases(discordUser.Member.Mention()),
+		Description: helpers.RandomizeJoinPhrases(discordUser.Mention),
 	})
 }
 
 func (as *ActivitiesServices) ExecutePay(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
 	discordUsr := discord.GetUserData(i)
-	user, err := as.repository.GetUserById(i.Member.User.ID)
+	repository := as.GetRepository(discordUsr.ServerId)
+
+	user, err := repository.GetUserById(i.Member.User.ID)
 	if err != nil {
 		return failUnexpectedOutput()
 	}
@@ -75,22 +79,27 @@ func (as *ActivitiesServices) ExecutePay(i *discordgo.InteractionCreate) *discor
 			Description: "seu frango! tu já treinou hoje mermão, volta amanhã"})
 	}
 	user.Pay()
-	err = as.repository.Save(aggregate)
+	err = repository.Save(aggregate)
 	if err != nil {
 		return failUnexpectedOutput()
 	}
 	return successOutput(OutOpt{
 		Title:       fmt.Sprintf("%s pagou!!!", user.GetNickname()),
-		Description: helpers.RandomizePayPhrases(discordUsr.Member.Mention()),
+		Description: helpers.RandomizePayPhrases(discordUsr.Mention),
 	})
 }
 
-func (as *ActivitiesServices) ExecuteRanking() *discordgo.InteractionResponseData {
+func (as *ActivitiesServices) ExecuteRanking(i *discordgo.InteractionCreate, serverId string) *discordgo.InteractionResponseData {
 	var emojiIter string
 	var restIter string
 	emojis := [3]string{"🥇🏆", "🥈🏆", "🥉🏆"}
 
-	rank, err := as.repository.GetUsersRank()
+	if serverId == "" {
+		serverId = discord.GetUserData(i).ServerId
+	}
+	repository := as.GetRepository(serverId)
+
+	rank, err := repository.GetUsersRank()
 	if err != nil {
 		return failUnexpectedOutput()
 	}
@@ -132,21 +141,22 @@ func (as *ActivitiesServices) ExecuteRanking() *discordgo.InteractionResponseDat
 }
 
 func (as *ActivitiesServices) ExecuteReset(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
-	myDiscord := discord.GetUserData(i)
-	modsId := strings.Split(env.Getenv("MODS_ID"), ",")
-	iamMod := slices.Contains(modsId, myDiscord.Id)
+	discordUsr := discord.GetUserData(i)
+	modsId := as.tenants[discordUsr.ServerId].ModsID
+	iamMod := slices.Contains(modsId, discordUsr.Id)
 	if !iamMod {
 		return failOutput(OutOpt{
 			Title:       "🤡🤡🤡🤡🤡🤡🤡",
 			Description: "🐰 Alice, curiosa como sempre, seguiu um coelho branco até um buraco misterioso. O que poderia dar errado,Alice? 🐰",
 		})
 	}
-	if err := as.repository.ResetCount(); err != nil {
+	repository := as.GetRepository(discordUsr.ServerId)
+	if err := repository.ResetCount(); err != nil {
 		return failUnexpectedOutput()
 	}
 	return successOutput(OutOpt{
 		Title:       "Contagem resetada com sucesso!",
-		Description: fmt.Sprintf("%s usou o comando para resetar as contagens dos frangos!", myDiscord.Nickname),
+		Description: fmt.Sprintf("%s usou o comando para resetar as contagens dos frangos!", discordUsr.Nickname),
 	})
 }
 
@@ -164,4 +174,8 @@ func (as *ActivitiesServices) HelpCmd() *discordgo.InteractionResponseData {
 		Title:       "Veja abaixo como os comandos funcionam.",
 		Description: description,
 	})
+}
+
+func (as *ActivitiesServices) GetRepository(serverID string) *repo.UserRepository {
+	return as.tenants[serverID].Repository
 }
