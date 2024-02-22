@@ -9,10 +9,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-var (
-	defaultsSet bool
-)
-
 /*
 	Getenv returns the environment variable or the default value if not set
 
@@ -38,7 +34,6 @@ func Load(defaults map[string]string, envFiles ...string) {
 			log.Default().Printf("ENV WARN: Can't load %s file.", env)
 		}
 	}
-	defaultsSet = true
 	logEnvs()
 }
 
