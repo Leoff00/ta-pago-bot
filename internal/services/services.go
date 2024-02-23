@@ -229,6 +229,8 @@ func (as *ActivitiesServices) HelpCmd() *discordgo.InteractionResponseData {
 	
 		/ranking: Use este comando para visualizar a lista atualizada dos **10 Primeiros** participantes. 🏆🏅
 
+		/editar_contagem: Este comando é utilizado pelos administradores do servidor para editar a contagem caso ocorra adversidades. 💪
+
 		/reset: Este comando é utilizado pelos administradores do servidor para resetar a contagem de treinos caso algo dê problema. 🫡💪
 		`)
 	return successOutput(OutOpt{
