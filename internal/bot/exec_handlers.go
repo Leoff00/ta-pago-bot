@@ -58,6 +58,18 @@ func (ih *InteractionsHandlers) reset() InteractionCreateResponse {
 	}
 }
 
+func (ih *InteractionsHandlers) edit() InteractionCreateResponse {
+	return func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		if i.Type == AppCmd {
+			switch i.ApplicationCommandData().Name {
+			case "editar_contagem":
+				editResponse := ih.services.ExecuteModEditCount(i)
+				discord.InteractionResponseFactory(editResponse, s, i)
+			}
+		}
+	}
+}
+
 func (ih *InteractionsHandlers) help() InteractionCreateResponse {
 	return func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if i.Type == AppCmd {

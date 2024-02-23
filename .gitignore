@@ -34,4 +34,4 @@ ta_pago_bot
 *seed*sql
 
 .idea
-tenant.json
+db/tenant.json

@@ -4,10 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"log"
+
 	"github.com/leoff00/ta-pago-bot/internal/domain"
 	"github.com/leoff00/ta-pago-bot/internal/models"
 	"github.com/leoff00/ta-pago-bot/pkg/discord"
-	"log"
 )
 
 type UserRepository struct {
@@ -75,7 +76,7 @@ func (ur *UserRepository) GetUserById(discordId string) (*domain.User, error) {
 	row := ur.db.QueryRow(`SELECT id, username, updated_at, count, nickname
 											FROM DISCORD_USERS WHERE id = ?`, discordId)
 	err := row.Scan(&du.Id, &du.Username, &du.Updated_at, &du.Count, &du.Nickname)
-	if errors.Is(err, sql.ErrNoRows) { //expected error
+	if errors.Is(err, sql.ErrNoRows) { // expected error
 		return &du, nil
 	}
 	if err != nil {
@@ -119,6 +120,22 @@ func (ur *UserRepository) ResetCount() error {
 	}
 	log.Default().Println("Rows affected on Update Count ->", affected)
 	return err
+}
+
+func (ur *UserRepository) EditCount(userId string, countValue int) error {
+	rows, err := ur.db.Exec(`UPDATE DISCORD_USERS SET count = ? WHERE id = ?`, countValue, userId)
+	if err != nil {
+		log.Default().Println("Cannot restart the count from DB on Repo.", err.Error())
+		return err
+	}
+
+	affected, err := rows.RowsAffected()
+	if err != nil {
+		log.Default().Println("Cannot get the affected row line numbers on Repo.", err.Error())
+		return err
+	}
+	log.Default().Println("Rows affected on Update Count ->", affected)
+	return nil
 }
 
 func (ur *UserRepository) ExistsById(id string) (bool, error) {

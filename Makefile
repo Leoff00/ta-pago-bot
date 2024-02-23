@@ -4,6 +4,7 @@ MAIN_DIR=./cmd
 BINARY_NAME=go_ta_pago_bot
 MIGRATIONS_DIR=./db/migrations
 MIGRATION_NAME=init_mg
+SEED_PATH=./db/seeds/seed.sql
 DEFAULT_PATH=./db/ta_pago.db
 ifneq ($(strip $(YOUR_ENV_VARIABLE)),)
     # If the environment variable is set, use its value
@@ -13,6 +14,11 @@ else
     DB_PATH := $(DEFAULT_PATH)
 endif
 MIGRATION_DATABASE=sqlite3://$(DB_PATH)
+
+dev: seed && go run cmd/main.go
+
+seed: 
+	sqlite3 ./db/server1.db < $(SEED_PATH)
 
 install:
 	go get ./... && go install ./...
@@ -38,4 +44,4 @@ clean:
 
 release: build run
 
-.PHONY: local build run release install migration_create migration_exec
+.PHONY: local build run release install migration_create migration_exec seed
