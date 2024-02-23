@@ -2,11 +2,12 @@ package bot
 
 import (
 	"fmt"
-	"github.com/leoff00/ta-pago-bot/internal/services"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/leoff00/ta-pago-bot/internal/services"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leoff00/ta-pago-bot/pkg/env"
@@ -66,5 +67,6 @@ func registerHandlers(bot *discordgo.Session, services *services.ActivitiesServi
 	bot.AddHandler(ih.pay())
 	bot.AddHandler(ih.ranking())
 	bot.AddHandler(ih.reset())
+	bot.AddHandler(ih.edit())
 	bot.AddHandler(ih.help())
 }

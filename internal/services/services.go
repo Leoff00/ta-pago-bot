@@ -2,15 +2,19 @@ package services
 
 import (
 	"fmt"
+	"log"
+	"regexp"
+	"slices"
+	"strings"
+
 	"github.com/bwmarrin/discordgo"
+
 	"github.com/leoff00/ta-pago-bot/internal/domain"
 	"github.com/leoff00/ta-pago-bot/internal/helpers"
 	"github.com/leoff00/ta-pago-bot/internal/models"
 	"github.com/leoff00/ta-pago-bot/internal/models/tenants"
 	"github.com/leoff00/ta-pago-bot/internal/repo"
 	"github.com/leoff00/ta-pago-bot/pkg/discord"
-	"log"
-	"slices"
 )
 
 // ActivitiesServices is a struct that holds configs & repository from a tenant
@@ -24,7 +28,9 @@ func NewActivitiesServices(tenants map[string]*tenants.Tenant) *ActivitiesServic
 	}
 }
 
-func (as *ActivitiesServices) ExecuteJoin(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
+func (as *ActivitiesServices) ExecuteJoin(
+	i *discordgo.InteractionCreate,
+) *discordgo.InteractionResponseData {
 	discordUser := discord.GetUserData(i)
 	repository := as.GetRepository(discordUser.ServerId)
 
@@ -58,7 +64,9 @@ func (as *ActivitiesServices) ExecuteJoin(i *discordgo.InteractionCreate) *disco
 	})
 }
 
-func (as *ActivitiesServices) ExecutePay(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
+func (as *ActivitiesServices) ExecutePay(
+	i *discordgo.InteractionCreate,
+) *discordgo.InteractionResponseData {
 	discordUsr := discord.GetUserData(i)
 	repository := as.GetRepository(discordUsr.ServerId)
 
@@ -72,11 +80,13 @@ func (as *ActivitiesServices) ExecutePay(i *discordgo.InteractionCreate) *discor
 	}
 	if user.IsNotSubscribed() {
 		return failOutput(OutOpt{
-			Description: "você precisa antes se inscrever na lista fera"})
+			Description: "você precisa antes se inscrever na lista fera",
+		})
 	}
 	if user.AlreadySubmitted() {
 		return failOutput(OutOpt{
-			Description: "seu frango! tu já treinou hoje mermão, volta amanhã"})
+			Description: "seu frango! tu já treinou hoje mermão, volta amanhã",
+		})
 	}
 	user.Pay()
 	err = repository.Save(aggregate)
@@ -89,7 +99,10 @@ func (as *ActivitiesServices) ExecutePay(i *discordgo.InteractionCreate) *discor
 	})
 }
 
-func (as *ActivitiesServices) ExecuteRanking(i *discordgo.InteractionCreate, serverId string) *discordgo.InteractionResponseData {
+func (as *ActivitiesServices) ExecuteRanking(
+	i *discordgo.InteractionCreate,
+	serverId string,
+) *discordgo.InteractionResponseData {
 	var emojiIter string
 	var restIter string
 	emojis := [3]string{"🥇🏆", "🥈🏆", "🥉🏆"}
@@ -140,7 +153,9 @@ func (as *ActivitiesServices) ExecuteRanking(i *discordgo.InteractionCreate, ser
 	})
 }
 
-func (as *ActivitiesServices) ExecuteReset(i *discordgo.InteractionCreate) *discordgo.InteractionResponseData {
+func (as *ActivitiesServices) ExecuteReset(
+	i *discordgo.InteractionCreate,
+) *discordgo.InteractionResponseData {
 	discordUsr := discord.GetUserData(i)
 	modsId := as.tenants[discordUsr.ServerId].ModsID
 	iamMod := slices.Contains(modsId, discordUsr.Id)
@@ -155,8 +170,54 @@ func (as *ActivitiesServices) ExecuteReset(i *discordgo.InteractionCreate) *disc
 		return failUnexpectedOutput()
 	}
 	return successOutput(OutOpt{
-		Title:       "Contagem resetada com sucesso!",
-		Description: fmt.Sprintf("%s usou o comando para resetar as contagens dos frangos!", discordUsr.Nickname),
+		Title: "Contagem resetada com sucesso!",
+		Description: fmt.Sprintf(
+			"%s usou o comando para resetar as contagens dos frangos!",
+			discordUsr.Username,
+		),
+	})
+}
+
+func (as *ActivitiesServices) ExecuteModEditCount(
+	i *discordgo.InteractionCreate,
+) *discordgo.InteractionResponseData {
+	// max value user can do workout (measured in months)
+	const MAX_WORKOUT_COUNT_ALLOWED int8 = 31
+	userId := i.ApplicationCommandData().Options[0].StringValue()
+	countValue := i.ApplicationCommandData().Options[1].IntValue()
+
+	normalizedUserId := strings.Join(regexp.MustCompile(`\d`).FindAllString(userId, -1), "")
+
+	if int8(countValue) < 0 || int8(countValue) > MAX_WORKOUT_COUNT_ALLOWED {
+		return failOutput(OutOpt{
+			Title:       "Deu Merda aqui!!!",
+			Description: "So é permitido editar a contagem até 31 meu nobre!!!",
+		})
+	}
+
+	discordUsr := discord.GetUserData(i)
+	repository := as.GetRepository(discordUsr.ServerId)
+
+	modsId := as.tenants[discordUsr.ServerId].ModsID
+	iamMod := slices.Contains(modsId, discordUsr.Id)
+
+	if !iamMod {
+		return failOutput(OutOpt{
+			Title:       "🤡🤡🤡🤡🤡🤡🤡",
+			Description: "🐰 Alice, curiosa como sempre, seguiu um coelho branco até um buraco misterioso. O que poderia dar errado,Alice? 🐰",
+		})
+	}
+
+	if err := repository.EditCount(normalizedUserId, int(countValue)); err != nil {
+		failUnexpectedOutput()
+	}
+
+	return successOutput(OutOpt{
+		Title: "Contagem resetada com sucesso!",
+		Description: fmt.Sprintf(
+			"%s Usou o comando para resetar as contagens dos frangos!",
+			discordUsr.Mention,
+		),
 	})
 }
 

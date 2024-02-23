@@ -9,6 +9,24 @@ import (
 var (
 	cmds = []*discordgo.ApplicationCommand{
 		{
+			Name:        "editar_contagem",
+			Description: "⚠️ Edit the count of an user (Mod Exclusive only).⚠️",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "user_id",
+					Description: "Which the user id",
+					Required:    true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionInteger,
+					Name:        "count",
+					Description: "Which the count",
+					Required:    true,
+				},
+			},
+		},
+		{
 			Name:        "reset",
 			Description: "⚠️ reset the db count (Mod exclusive only).⚠️",
 		},

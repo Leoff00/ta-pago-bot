@@ -2,17 +2,19 @@ package setup
 
 import (
 	"encoding/json"
-	"github.com/leoff00/ta-pago-bot/internal/models/tenants"
 	"log"
 	"os"
+
+	"github.com/leoff00/ta-pago-bot/internal/models/tenants"
 )
 
 func Tenants() []tenants.Tenant {
 	configFile, err := os.Open("./db/tenant.json")
-	defer configFile.Close()
 	if err != nil {
 		log.Default().Fatalln("Can't open ./db/tenant.json", err.Error())
 	}
+
+	defer configFile.Close()
 
 	var tenantsCfg []tenants.Tenant
 	jsonParser := json.NewDecoder(configFile)
