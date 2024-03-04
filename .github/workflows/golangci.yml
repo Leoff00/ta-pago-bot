@@ -23,6 +23,6 @@ jobs:
 
       - name: Build and Push docker image
         run: |
-          docker buildx build --platform=linux/amd64,linux/arm64 -t ${{ secrets.DOCKERHUB_USERNAME }}/tapagobot .
+          docker buildx build --platform=linux/amd64,linux/arm64
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/tapagobot:latest-amd64
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/tapagobot:latest-arm64
