@@ -31,25 +31,33 @@ func NewActivitiesServices(tenants map[string]*tenants.Tenant) *ActivitiesServic
 func (as *ActivitiesServices) ExecuteJoin(
 	i *discordgo.InteractionCreate,
 ) *discordgo.InteractionResponseData {
-	discordUser := discord.GetUserData(i)
-	repository := as.GetRepository(discordUser.ServerId)
+	discordUsr := discord.GetUserData(i)
+	repository := as.GetRepository(discordUsr.ServerId)
 
-	isSubscribed, err := repository.ExistsById(discordUser.Id)
+	allowedChannelId := as.tenants[discordUsr.ServerId].ChannelID
+
+	if discordUsr.ChannelId != allowedChannelId {
+		return failOutput(OutOpt{
+			Description: "Só é permitido enviar comandos do bot no canal configurado!!!",
+		})
+	}
+
+	isSubscribed, err := repository.ExistsById(discordUsr.Id)
 	if err != nil {
 		return failUnexpectedOutput()
 	}
 	if isSubscribed {
 		d := fmt.Sprintf(
 			"Parece que o canela seca do %s ta tentando me derrubar, TU JA TA INSCRITO SUA MULA!!",
-			discordUser.Mention)
+			discordUsr.Mention)
 		return failOutput(OutOpt{
 			Description: d,
 		})
 	}
 	user, err := domain.NewUser(domain.CreateUserOpts{
-		Id:       discordUser.Id,
-		Username: discordUser.Username,
-		Nickname: discordUser.Nickname,
+		Id:       discordUsr.Id,
+		Username: discordUsr.Username,
+		Nickname: discordUsr.Nickname,
 	})
 	if err != nil {
 		log.Default().Println("Error during user creation", err.Error())
@@ -60,7 +68,7 @@ func (as *ActivitiesServices) ExecuteJoin(
 	}
 	return successOutput(OutOpt{
 		Title:       "Agora é só mandar bala, digite o comando /ta-pago toda vez que buscar o shape meu nobre!! 💪🏅",
-		Description: helpers.RandomizeJoinPhrases(discordUser.Mention),
+		Description: helpers.RandomizeJoinPhrases(discordUsr.Mention),
 	})
 }
 
@@ -71,13 +79,23 @@ func (as *ActivitiesServices) ExecutePay(
 	repository := as.GetRepository(discordUsr.ServerId)
 
 	user, err := repository.GetUserById(i.Member.User.ID)
+	allowedChannelId := as.tenants[discordUsr.ServerId].ChannelID
+
+	if discordUsr.ChannelId != allowedChannelId {
+		return failOutput(OutOpt{
+			Description: "Só é permitido enviar comandos do bot no canal configurado!!!",
+		})
+	}
+
 	if err != nil {
 		return failUnexpectedOutput()
 	}
+
 	aggregate := &models.UserAggregate{
 		User:        user,
 		DiscordUser: discordUsr,
 	}
+
 	if user.IsNotSubscribed() {
 		return failOutput(OutOpt{
 			Description: "você precisa antes se inscrever na lista fera",
@@ -88,6 +106,7 @@ func (as *ActivitiesServices) ExecutePay(
 			Description: "seu frango! tu já treinou hoje mermão, volta amanhã",
 		})
 	}
+
 	user.Pay()
 	err = repository.Save(aggregate)
 	if err != nil {
@@ -103,6 +122,7 @@ func (as *ActivitiesServices) ExecuteRanking(
 	i *discordgo.InteractionCreate,
 	serverId string,
 ) *discordgo.InteractionResponseData {
+	discordUsr := discord.GetUserData(i)
 	var emojiIter string
 	var restIter string
 	emojis := [3]string{"🥇🏆", "🥈🏆", "🥉🏆"}
@@ -110,6 +130,15 @@ func (as *ActivitiesServices) ExecuteRanking(
 	if serverId == "" {
 		serverId = discord.GetUserData(i).ServerId
 	}
+
+	allowedChannelId := as.tenants[discordUsr.ServerId].ChannelID
+
+	if discordUsr.ChannelId != allowedChannelId {
+		return failOutput(OutOpt{
+			Description: "Só é permitido enviar comandos do bot no canal configurado!!!",
+		})
+	}
+
 	repository := as.GetRepository(serverId)
 
 	rank, err := repository.GetUsersRank()
@@ -159,6 +188,15 @@ func (as *ActivitiesServices) ExecuteReset(
 	discordUsr := discord.GetUserData(i)
 	modsId := as.tenants[discordUsr.ServerId].ModsID
 	iamMod := slices.Contains(modsId, discordUsr.Id)
+
+	allowedChannelId := as.tenants[discordUsr.ServerId].ChannelID
+
+	if discordUsr.ChannelId != allowedChannelId {
+		return failOutput(OutOpt{
+			Description: "Só é permitido enviar comandos do bot no canal configurado!!!",
+		})
+	}
+
 	if !iamMod {
 		return failOutput(OutOpt{
 			Title:       "🤡🤡🤡🤡🤡🤡🤡",
@@ -183,8 +221,17 @@ func (as *ActivitiesServices) ExecuteModEditCount(
 ) *discordgo.InteractionResponseData {
 	// max value user can do workout (measured in months)
 	const MAX_WORKOUT_COUNT_ALLOWED int8 = 31
+	discordUsr := discord.GetUserData(i)
 	userId := i.ApplicationCommandData().Options[0].StringValue()
 	countValue := i.ApplicationCommandData().Options[1].IntValue()
+
+	allowedChannelId := as.tenants[discordUsr.ServerId].ChannelID
+
+	if discordUsr.ChannelId != allowedChannelId {
+		return failOutput(OutOpt{
+			Description: "Só é permitido enviar comandos do bot no canal configurado!!!",
+		})
+	}
 
 	normalizedUserId := strings.Join(regexp.MustCompile(`\d`).FindAllString(userId, -1), "")
 
@@ -195,7 +242,6 @@ func (as *ActivitiesServices) ExecuteModEditCount(
 		})
 	}
 
-	discordUsr := discord.GetUserData(i)
 	repository := as.GetRepository(discordUsr.ServerId)
 
 	modsId := as.tenants[discordUsr.ServerId].ModsID
