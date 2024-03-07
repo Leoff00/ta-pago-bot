@@ -8,7 +8,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -20,9 +25,10 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: 1.21
-
-      - name: Build and Push docker image
-        run: |
-          docker buildx create --use --name bot_builder
-          docker buildx build -t ${{ secrets.DOCKERHUB_USERNAME }}/tapagobot --platform=linux/amd64,linux/arm64 .
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/tapagobot:latest
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tapagobot:latest
