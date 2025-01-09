@@ -1,6 +1,6 @@
 module github.com/leoff00/ta-pago-bot
 
-go 1.21.5
+go 1.22.0
 
 require (
 	github.com/golang-migrate/migrate/v4 v4.17.0

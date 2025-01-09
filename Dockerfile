@@ -1,30 +1,49 @@
 # BUILD STAGE
-FROM golang:1.21.5
-ENV TZ="America/Sao_Paulo"
+FROM golang:1.22.0 AS base
 WORKDIR /app
 
-# Go dependencies download
-COPY go.mod go.sum ./
-
-RUN go mod download && go mod verify
-# Copy everything from PWD build to /app container
-COPY . .
-
-# Remove unwanted acidentally files
-RUN find . -type f \( -name '*.db' -o -name '*.sqlite' -o -name '*.sqlite3' -o -name '*.sql' -o -name '*.env' -o -name 'ta_pago_bot' -o -name 'tenant.json' \) -delete
-
-# Remove db directory if it exists
-RUN if [ -d "/app/db" ]; then rm -rf /app/db; fi
+# Set timezone
+ENV TZ="America/Sao_Paulo"
 
 # Create directories for database migrations
 RUN mkdir -p ./db/migrations
 
-# SQLite3 dependencies
+# Copy source code and Go modules
+COPY . .
+RUN go mod download 
+
+# Install SQLite3 dependencies
 RUN apt-get update && apt-get install -y sqlite3 libsqlite3-dev
 
-# Build the go app to /app/ta_pago_bot
-RUN go build -o ./ta_pago_bot ./cmd/main.go
+# Install the migrate CLI with SQLite3 support
+RUN go install -tags 'sqlite3' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.1
 
+# Run migrations
+RUN migrate -path ./db/migrations -database sqlite3://./db/ta_pago.db up
+
+# Build the Go binary with CGO enabled
+RUN CGO_ENABLED=1 GOOS=linux go build -o tapagobot .
+
+# DEPLOY STAGE
+FROM debian:bookworm-slim
+WORKDIR /app
+
+# Set timezone
+ENV TZ="America/Sao_Paulo"
+
+# Install runtime dependencies (including SQLite and glibc)
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    sqlite3 \
+    libsqlite3-0 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy the binary and migrations directory
+COPY --from=base /app/tapagobot .
+COPY --from=base /app/db/migrations ./db/migrations
+
+# Expose the application port
 EXPOSE 4000
 
-CMD ["./ta_pago_bot"]
+# Run the application
+ENTRYPOINT ["/app/tapagobot"]

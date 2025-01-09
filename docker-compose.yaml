@@ -7,18 +7,13 @@ services:
       dockerfile: Dockerfile
       context: .
     environment:
-      TOKEN: ${TOKEN}
-      CHANNEL_ID: ${CHANNEL_ID}
+      SENSITIVE_TOKEN: ${SENSITIVE_TOKEN}
       MODS_ID: ${MODS_ID}
+      ENV: ${ENV}
     volumes:
-      - ./db:/app/db # This is the path to the database
+      - ./db:/app/db 
     ports:
       - 4000:4000
-    networks:
-      - tapago_network
     restart: on-failure
 
 
-networks:
-  tapago_network:
-    driver: bridge

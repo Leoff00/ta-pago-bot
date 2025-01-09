@@ -210,7 +210,7 @@ func (as *ActivitiesServices) ExecuteReset(
 	return successOutput(OutOpt{
 		Title: "Contagem resetada com sucesso!",
 		Description: fmt.Sprintf(
-			"%s usou o comando para resetar as contagens dos frangos!",
+			"%s usou o comando para resetar a contagem dos frangos!",
 			discordUsr.Username,
 		),
 	})
@@ -259,9 +259,9 @@ func (as *ActivitiesServices) ExecuteModEditCount(
 	}
 
 	return successOutput(OutOpt{
-		Title: "Contagem resetada com sucesso!",
+		Title: "Contagem editada!",
 		Description: fmt.Sprintf(
-			"%s Usou o comando para resetar as contagens dos frangos!",
+			"%s Usou o comando para editar a contagem dos frangos!",
 			discordUsr.Mention,
 		),
 	})
